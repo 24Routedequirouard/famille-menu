@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a2e20">
+<title>Famille OS</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#F5F2ED;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;padding-bottom:6rem}
+.topbar{position:fixed;top:0;left:0;right:0;background:linear-gradient(160deg,#1a2e20,#2D4A35);padding:calc(env(safe-area-inset-top,0px) + .9rem) 1.4rem .9rem;display:flex;align-items:center;gap:.75rem;z-index:10}
+.back{color:white;text-decoration:none;font-size:.9rem;opacity:.7}
+.tb-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:white;font-weight:700;flex:1}
+.card{background:white;border-radius:20px;padding:2rem;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.ico{font-size:3rem;margin-bottom:1rem}
+h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:#1C1C1E;margin-bottom:.5rem}
+p{font-size:.82rem;color:#8E8E93;line-height:1.6;margin-bottom:1.2rem}
+.badge{background:#EAF3EC;color:#4A7C59;border-radius:99px;padding:.3rem 1rem;font-size:.75rem;font-weight:700;display:inline-block;margin-bottom:.5rem}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #E5E5EA;display:flex;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom,0px));z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;text-decoration:none;padding:.3rem 0}
+.bnav-ico{font-size:1.25rem;line-height:1}
+.bnav-lbl{font-size:.58rem;font-weight:500;color:#8E8E93}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html" class="back">← Accueil</a>
+  <span class="tb-title">Famille OS</span>
+</div>
+<div class="card" style="margin-top:4rem">
+  <div class="ico">🎭</div>
+  <div class="badge">Bientôt disponible</div>
+  <h2>Sorties</h2>
+  <p>Spectacles, sport, musées et activités locales adaptés à votre famille, avec réservation directe.</p>
+  <a href="index.html" style="background:#4A7C59;color:white;border-radius:10px;padding:.7rem 1.5rem;text-decoration:none;font-size:.85rem;font-weight:600;display:inline-block">← Retour à l'accueil</a>
+</div>
+<nav class="bnav">
+  <a href="index.html" class="bnav-item"><span class="bnav-ico">🏠</span><span class="bnav-lbl">Accueil</span></a>
+  <a href="famille.html" class="bnav-item"><span class="bnav-ico">👨‍👩‍👧‍👦</span><span class="bnav-lbl">Famille</span></a>
+  <a href="menu.html" class="bnav-item"><span class="bnav-ico">🍲</span><span class="bnav-lbl">Menu</span></a>
+  <a href="films.html" class="bnav-item"><span class="bnav-ico">🎬</span><span class="bnav-lbl">Films</span></a>
+  <a href="cadeaux.html" class="bnav-item"><span class="bnav-ico">🎁</span><span class="bnav-lbl">Cadeaux</span></a>
+</nav>
+</body>
+</html>

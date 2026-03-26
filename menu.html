@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Famille · Thermomix</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--bg:#F5F2ED;--sf:#FFF;--s2:#F9F7F4;--sage:#4A7C59;--sxl:#EAF3EC;--sb:#C8DECC;--ink:#1C1C1E;--k2:#48484A;--mt:#8E8E93;--bd:#E5E5EA;--am:#C47A1A;--aml:#FEF3DC;--rd:#C0392B;--rdl:#FEF0EE;--bl:#2C6BAD;--bll:#EBF3FC;--r:16px;--rs:10px;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);--shm:0 4px 16px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:900;display:none;align-items:center;justify-content:center;padding:1rem}
+.ov.show{display:flex}
+.modal{background:var(--sf);border-radius:var(--r);padding:1.6rem;width:100%;max-width:420px;box-shadow:var(--shm)}
+.modal h3{font-size:1rem;font-weight:700;margin-bottom:.3rem}
+.modal p{font-size:.8rem;color:var(--mt);line-height:1.6;margin-bottom:.85rem}
+.modal input{width:100%;border:1.5px solid var(--bd);border-radius:var(--rs);padding:.7rem 1rem;font-family:'Inter',sans-serif;font-size:.85rem;color:var(--ink);margin-bottom:.7rem;outline:none;transition:border .2s}
+.modal input:focus{border-color:var(--sage)}
+.hint{font-size:.73rem;color:var(--mt);background:var(--s2);border-radius:8px;padding:.5rem .8rem;margin-bottom:.8rem;line-height:1.5}
+.bp{width:100%;background:var(--sage);color:white;border:none;border-radius:var(--rs);padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:background .2s}
+.bp:hover{background:#3a6347}
+.bg{background:transparent;color:var(--mt);border:none;font-size:.76rem;cursor:pointer;text-decoration:underline;display:block;margin:.4rem auto 0;font-family:'Inter',sans-serif}
+
+/* login */
+#ls{position:fixed;inset:0;background:linear-gradient(145deg,#2D4A35,#1a2e20);display:flex;align-items:center;justify-content:center;z-index:999}
+.lc{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:2.4rem 1.9rem;width:100%;max-width:330px;text-align:center}
+.lc h2{font-family:'Playfair Display',serif;font-size:1.75rem;color:white;margin-bottom:.25rem}
+.lc p{font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:1.3rem}
+.lc input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:12px;padding:.72rem 1.1rem;font-family:'Inter',sans-serif;font-size:.93rem;text-align:center;letter-spacing:.1em;outline:none;margin-bottom:.85rem}
+.lc input::placeholder{color:rgba(255,255,255,.3);letter-spacing:0}
+.lbtn{width:100%;background:#6A9E79;color:white;border:none;border-radius:12px;padding:.78rem;font-family:'Inter',sans-serif;font-size:.93rem;font-weight:600;cursor:pointer}
+.lerr{color:#FF6B6B;font-size:.78rem;margin-top:.4rem;display:none}
+
+/* gen */
+#go{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);z-index:800;display:none;align-items:center;justify-content:center}
+#go.show{display:flex}
+.gc{background:var(--sf);border-radius:var(--r);padding:1.9rem;text-align:center;max-width:260px;width:90%}
+.gs{width:40px;height:40px;border:3px solid var(--sxl);border-top-color:var(--sage);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto .85rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gt{font-size:.9rem;font-weight:600;margin-bottom:.2rem}
+.gsb{font-size:.76rem;color:var(--mt)}
+
+/* topbar */
+.tb{background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:100}
+.tbi{max-width:1100px;margin:0 auto;padding:.8rem 1.4rem;display:flex;align-items:center;gap:.6rem}
+.br{display:flex;align-items:center;gap:.5rem;flex:1}
+.bd{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0}
+.bd.sy{animation:pu .8s ease-in-out infinite;background:var(--am)}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.35}}
+.bn{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700}
+.bs{font-size:.68rem;color:var(--mt);margin-left:.2rem}
+.tbtn{border:none;border-radius:var(--rs);padding:.48rem .85rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .14s;white-space:nowrap;display:flex;align-items:center;gap:.3rem}
+.ts{background:var(--sage);color:white}.ts:hover{background:#3a6347;transform:translateY(-1px)}
+.to{background:transparent;color:var(--k2);border:1.5px solid var(--bd)}.to:hover{border-color:var(--sage);color:var(--sage)}
+.ti{background:var(--s2);color:var(--k2);border:1.5px solid var(--bd);padding:.48rem .6rem}
+.rc{background:var(--am);color:white;border-radius:99px;padding:.08rem .42rem;font-size:.66rem;font-weight:700}
+
+/* nav */
+.nt{background:var(--sf);border-bottom:1px solid var(--bd)}
+.ni{max-width:1100px;margin:0 auto;padding:0 1.4rem;display:flex;gap:.15rem}
+.nb{background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;color:var(--mt);padding:.7rem .95rem;position:relative;transition:color .2s;white-space:nowrap}
+.nb.on{color:var(--sage);font-weight:600}
+.nb.on::after{content:'';position:absolute;bottom:0;left:.35rem;right:.35rem;height:2px;background:var(--sage);border-radius:2px 2px 0 0}
+
+/* recap */
+.rcp{background:#FFFBF0;border-bottom:1px solid #FDECC0;padding:.5rem 1.4rem;display:none}
+.rcp.show{display:block}
+.rcpi{max-width:1100px;margin:0 auto;display:flex;gap:.45rem;align-items:center;flex-wrap:wrap}
+.rtg{font-size:.71rem;font-weight:600;padding:.18rem .62rem;border-radius:99px}
+.rrs{margin-left:auto;font-size:.71rem;color:var(--mt);background:transparent;border:1px solid var(--bd);border-radius:6px;padding:.18rem .62rem;cursor:pointer;font-family:'Inter',sans-serif}
+
+main{max-width:1100px;margin:0 auto;padding:1.3rem 1.1rem 5rem}
+.tab{display:none}.tab.on{display:block}
+
+/* legend */
+.leg{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--mt);padding:.55rem .85rem;background:var(--sf);border-radius:var(--rs);border:1px solid var(--bd)}
+.lch{border-radius:99px;padding:.13rem .56rem;font-weight:600;font-size:.68rem}
+
+/* grid */
+.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:.85rem}
+.dc{background:var(--sf);border-radius:var(--r);border:1px solid var(--bd);box-shadow:var(--sh);overflow:hidden;transition:box-shadow .2s}
+.dc:hover{box-shadow:var(--shm)}
+.dh{padding:.65rem 1.05rem;display:flex;align-items:center;justify-content:space-between}
+.dh.wk{background:var(--sage)}.dh.we{background:linear-gradient(135deg,#C84B1F,#E8622A)}
+.dn{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:700;color:white}
+
+/* meal */
+.ml{padding:.78rem .95rem;border-bottom:1px solid var(--bd);transition:background .15s}
+.ml:last-child{border-bottom:none}
+.ml.rm{background:#FFF8F7}.ml.rn{background:#FFFCF5}
+.mt{display:flex;align-items:flex-start;justify-content:space-between;gap:.45rem}
+.mlt{flex:1;min-width:0}
+.mtp{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mt);margin-bottom:.15rem}
+.mn{font-size:.84rem;font-weight:600;color:var(--ink);line-height:1.3}
+.ml.rm .mn{text-decoration:line-through;color:var(--mt)}
+.sb2{border:none;border-radius:7px;padding:.26rem .58rem;font-size:.68rem;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .12s;font-family:'Inter',sans-serif}
+.sb2:hover{filter:brightness(.91)}
+.sk{background:var(--sxl);color:var(--sage)}.sn{background:var(--aml);color:var(--am)}.sd{background:var(--rdl);color:var(--rd)}
+.mh{font-size:.69rem;font-style:italic;margin-top:.25rem}
+.hr{color:var(--am)}.hd2{color:var(--rd)}
+.md{font-size:.71rem;color:var(--mt);margin-top:.28rem;line-height:1.4}
+
+/* nutrition row */
+.nr{display:flex;align-items:center;gap:.35rem;margin-top:.55rem;flex-wrap:wrap}
+.kc{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:.16rem .52rem;font-size:.7rem;display:flex;align-items:center;gap:.22rem}
+.sc{border-radius:6px;padding:.16rem .52rem;font-size:.68rem;font-weight:600}
+.mb2{background:transparent;border:1px solid var(--bd);border-radius:5px;padding:.16rem .48rem;font-size:.66rem;cursor:pointer;color:var(--mt);margin-left:auto;font-family:'Inter',sans-serif}
+.mx{margin-top:.52rem;padding:.58rem .72rem;background:var(--s2);border-radius:7px;border:1px solid var(--bd);display:none}
+.mx.op{display:block}
+.mxb{display:flex;border-radius:3px;overflow:hidden;height:4px;margin-bottom:.32rem}
+.xp{background:#3B82F6}.xl{background:#F59E0B}.xg{background:#10B981}
+.mxl{display:flex;gap:.5rem;font-size:.66rem}
+.mxn{font-size:.63rem;color:var(--mt);margin-top:.28rem}
+
+/* tags - compact */
+.tgs{display:flex;gap:.28rem;flex-wrap:wrap;margin-top:.55rem;align-items:center}
+.ctag{display:inline-flex;align-items:center;gap:.22rem;background:var(--aml);border:1px solid #FDE8B0;border-radius:6px;padding:.16rem .5rem;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+.ctag span{font-size:.68rem;color:var(--am);font-weight:700}
+.ttag2{font-size:.68rem;color:var(--sage);font-weight:500;background:var(--sxl);padding:.16rem .5rem;border-radius:6px;border:1px solid var(--sb)}
+.rbtn{background:#F0EAFF;color:#5B21B6;border:none;border-radius:6px;padding:.16rem .5rem;font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.gbtn{background:#FFF3E0;color:#E65100;border:none;border-radius:6px;padding:.16rem .5rem;font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* stars */
+.str{display:flex;align-items:center;gap:.12rem;margin-top:.45rem}
+.st{font-size:.9rem;cursor:pointer;color:#D1D1D6;transition:transform .1s;line-height:1}
+.st.on{color:#F59E0B}
+.st:hover{transform:scale(1.28);color:#F59E0B}
+.stl{font-size:.65rem;color:var(--mt);margin-left:.28rem}
+
+/* QR */
+#qrOv .modal{max-width:300px;text-align:center}
+#qrCv{display:flex;justify-content:center;margin:.85rem 0 .6rem}
+.qlink{display:inline-flex;align-items:center;gap:.3rem;background:var(--sxl);color:var(--sage);border:1px solid var(--sb);border-radius:7px;padding:.35rem .85rem;font-size:.78rem;font-weight:600;text-decoration:none;margin-bottom:.85rem}
+
+/* Recipe modal */
+#recOv .modal{max-width:510px;max-height:88vh;overflow-y:auto;padding:0}
+.rh{background:var(--ink);padding:1rem 1.2rem;border-radius:var(--r) var(--r) 0 0;position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem}
+.rtg2{font-size:.65rem;color:#6A9E79;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:.2rem}
+.rtl{font-size:.92rem;font-weight:700;color:#FDFAF4;line-height:1.3}
+.rts{font-size:.72rem;color:rgba(253,250,244,.4);margin-top:.18rem}
+.rcl{background:rgba(255,255,255,.12);border:none;border-radius:6px;color:white;cursor:pointer;padding:.26rem .55rem;font-size:.88rem;flex-shrink:0}
+.rb{padding:1rem 1.2rem}
+.rload{text-align:center;padding:2rem 0;display:flex;flex-direction:column;align-items:center;gap:.65rem}
+
+/* Thermomix glossary box */
+.tmx-gloss{background:var(--sxl);border:1px solid var(--sb);border-radius:9px;padding:.7rem .9rem;margin-bottom:.9rem;font-size:.74rem;color:#2D5A38;line-height:1.7}
+.tmx-gloss strong{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem;color:var(--sage)}
+
+.cbox{background:var(--aml);border:1px solid #FDE8B0;border-radius:8px;padding:.6rem .85rem;display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem;text-decoration:none}
+.cbl{font-size:.68rem;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.06em}
+.cbt{font-size:.82rem;font-weight:600;color:#78350F;margin-top:.08rem}
+.clnk{display:block;text-align:center;font-size:.73rem;color:var(--sage);font-weight:600;margin-bottom:.9rem;text-decoration:none}
+
+.rsec{margin-bottom:1rem}
+.rstt{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.rs-s{color:var(--sage)}.rs-r{color:var(--rd)}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px}
+.ir{font-size:.76rem;padding:3px 0;border-bottom:1px solid var(--bd);display:flex;gap:.3rem}
+.id{color:var(--sage);flex-shrink:0}
+
+.scard2{background:var(--s2);border:1px solid var(--bd);border-left:3px solid var(--rd);border-radius:7px;padding:.6rem .8rem;margin-bottom:.4rem}
+.stop{display:flex;justify-content:space-between;align-items:flex-start;gap:.35rem;margin-bottom:.28rem}
+.snm{font-size:.8rem;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:.35rem}
+.snum{background:var(--rd);color:white;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0}
+.sbgs{display:flex;gap:.22rem;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0}
+.sbg{font-size:.6rem;font-weight:700;padding:2px 5px;border-radius:4px}
+.sv{background:var(--sxl);color:var(--sage)}.sa2{background:var(--aml);color:var(--am)}.st2{background:var(--bll);color:var(--bl)}
+.sdt{font-size:.74rem;color:#333;line-height:1.55}
+.tip2{background:var(--sxl);border:1px solid var(--sb);border-radius:7px;padding:.6rem .85rem;font-size:.74rem;color:#2D5A38;line-height:1.5}
+
+/* Prefs modal */
+#pfOv .modal{max-width:540px;max-height:88vh;overflow-y:auto}
+.ps{margin-bottom:1.2rem}
+.pl{font-size:.72rem;font-weight:700;color:var(--k2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;display:block}
+.chs{display:flex;flex-wrap:wrap;gap:.3rem}
+.ch{border:1.5px solid var(--bd);border-radius:99px;padding:.25rem .75rem;font-size:.76rem;font-weight:500;cursor:pointer;background:var(--sf);color:var(--k2);transition:all .12s;user-select:none}
+.ch:hover{border-color:var(--sage);color:var(--sage)}
+.ch.on{background:var(--sage);border-color:var(--sage);color:white}
+.ptx{width:100%;border:1.5px solid var(--bd);border-radius:var(--rs);padding:.58rem .82rem;font-family:'Inter',sans-serif;font-size:.78rem;color:var(--ink);resize:none;outline:none;transition:border .2s}
+.ptx:focus{border-color:var(--sage)}
+.pft{display:flex;gap:.5rem;margin-top:.4rem}
+.pft .bp{flex:1}
+.bsc{flex:1;background:var(--s2);color:var(--k2);border:1.5px solid var(--bd);border-radius:var(--rs);padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer}
+.pbdg{position:absolute;top:-3px;right:-3px;width:7px;height:7px;background:var(--sage);border-radius:50%;border:2px solid var(--sf)}
+
+/* Guest modal */
+#gstOv .modal{max-width:400px}
+.gst-days{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;margin-bottom:.85rem}
+.gday{border:1.5px solid var(--bd);border-radius:8px;padding:.4rem .3rem;text-align:center;cursor:pointer;font-size:.75rem;font-weight:500;transition:all .12s;font-family:'Inter',sans-serif;background:var(--sf)}
+.gday:hover{border-color:var(--sage)}
+.gday.on{background:var(--sage);border-color:var(--sage);color:white}
+.gmeal{display:flex;gap:.35rem;margin-bottom:.7rem}
+.gmo{flex:1;border:1.5px solid var(--bd);border-radius:8px;padding:.45rem;text-align:center;cursor:pointer;font-size:.76rem;font-weight:500;transition:all .12s;font-family:'Inter',sans-serif;background:var(--sf)}
+.gmo.on{background:var(--sage);border-color:var(--sage);color:white}
+
+/* shop */
+.shdr2{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:.85rem 1.1rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-bottom:.85rem;box-shadow:var(--sh)}
+.scnt{font-size:1.9rem;font-weight:700;color:var(--sage);line-height:1}
+.scl{font-size:.71rem;color:var(--mt)}
+.stg{background:var(--sxl);color:var(--sage);border-radius:7px;padding:.26rem .72rem;font-size:.7rem;font-weight:600;border:1px solid var(--sb)}
+.stb{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
+.stb .tbtn{font-size:.76rem;padding:.46rem .85rem}
+.sgd{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:.65rem}
+.scd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;box-shadow:var(--sh)}
+.shd{padding:.56rem .85rem;display:flex;align-items:center;gap:.45rem}
+.scn{font-size:.8rem;font-weight:700;color:white;flex:1}
+.smn{background:rgba(255,255,255,.25);color:white;font-size:.62rem;font-weight:700;padding:.08rem .48rem;border-radius:99px}
+.srs{padding:.38rem .8rem}
+.sr2{display:flex;align-items:center;gap:.5rem;padding:4px 0;border-bottom:1px solid var(--bd);cursor:pointer}
+.sr2:last-child{border-bottom:none}
+.ck{width:15px;height:15px;border-radius:4px;flex-shrink:0;border:1.5px solid #C7C7CC;display:flex;align-items:center;justify-content:center;transition:all .13s}
+.sr2.dn .ck{background:var(--sage);border-color:var(--sage)}
+.sr2.dn .ck::after{content:'✓';color:white;font-size:.6rem;font-weight:700}
+.sr2.dn .ilb{text-decoration:line-through;color:var(--mt)}
+.ilb{font-size:.76rem;flex:1}.iqu{font-size:.68rem;color:var(--mt);font-weight:500}
+.isp{padding-top:.28rem;margin-top:.28rem;border-top:1px dashed var(--bd)}
+.iof{display:flex;align-items:center;gap:.5rem;padding:2px 0;opacity:.32}
+.cko{width:15px;height:15px;border-radius:4px;flex-shrink:0;border:1.5px dashed #C7C7CC}
+
+/* drive modal */
+#drOv .modal{max-width:490px;max-height:85vh;overflow-y:auto}
+/* edit */
+#edOv .modal{max-width:410px}
+.er{margin-bottom:.7rem}
+.el{font-size:.7rem;font-weight:700;color:var(--k2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.28rem;display:block}
+.ei{width:100%;border:1.5px solid var(--bd);border-radius:var(--rs);padding:.6rem .85rem;font-family:'Inter',sans-serif;font-size:.82rem;color:var(--ink);outline:none;transition:border .2s;background:var(--sf)}
+.ei:focus{border-color:var(--sage)}
+.ef{display:flex;gap:.45rem;margin-top:.4rem}
+.ef .bp{flex:1}
+.esc{flex:1;background:var(--s2);color:var(--k2);border:1.5px solid var(--bd);border-radius:var(--rs);padding:.68rem;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer}
+.ebtn{background:#F0F9FF;color:#0369A1;border:none;border-radius:6px;padding:.16rem .48rem;font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+.dlst{font-size:.76rem;line-height:1.85;background:var(--s2);border-radius:8px;padding:.72rem .88rem;border:1px solid var(--bd);max-height:270px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;margin-bottom:.85rem}
+.dbt{display:flex;gap:.4rem}
+.db{border:none;border-radius:8px;padding:.52rem .95rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer}
+
+/* hist */
+.hgd{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.55rem}
+.hcd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);padding:.75rem .9rem;display:flex;align-items:center;gap:.65rem;box-shadow:var(--sh)}
+.hst{font-size:.8rem;white-space:nowrap;flex-shrink:0}
+.hnm{font-size:.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbd{font-size:.62rem;font-weight:700;padding:.08rem .48rem;border-radius:99px}
+.hl{background:var(--aml);color:var(--am)}.hs{background:var(--rdl);color:var(--rd)}.ho{background:var(--bll);color:var(--bl)}
+.hd3{background:var(--rdl);color:var(--rd);border:none;border-radius:5px;padding:3px 6px;font-size:.7rem;cursor:pointer;flex-shrink:0}
+
+#toast{position:fixed;bottom:1.3rem;left:50%;transform:translateX(-50%) translateY(80px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:var(--ink);color:white;padding:.55rem 1.05rem;border-radius:99px;font-size:.78rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:640px){.wg,.sgd,.hgd{grid-template-columns:1fr}.tbi{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<div id="ls" style="position:fixed;inset:0;background:linear-gradient(145deg,#2D4A35,#1a2e20);display:flex;align-items:center;justify-content:center;z-index:999">
+  <div style="text-align:center;width:100%;max-width:320px;padding:2rem">
+    <div style="font-size:2.2rem;margin-bottom:.8rem">🍲</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.75rem;color:white;margin-bottom:.25rem">Menu Famille</h2>
+    <p style="font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:1.3rem">Thermomix · 5 personnes · Synchronisé</p>
+    <input id="pwi" type="password" placeholder="Mot de passe" autocomplete="current-password"
+      style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:12px;padding:.75rem 1.2rem;font-family:'Inter',sans-serif;font-size:.95rem;text-align:center;letter-spacing:.1em;outline:none;margin-bottom:.85rem">
+    <button onclick="checkPw()" style="width:100%;background:#6A9E79;color:white;border:none;border-radius:12px;padding:.82rem;font-family:'Inter',sans-serif;font-size:.93rem;font-weight:600;cursor:pointer">Entrer →</button>
+    <div id="lerr" style="color:#FF6B6B;font-size:.78rem;margin-top:.5rem;display:none">Mot de passe incorrect</div>
+    <a href="index.html" style="display:block;margin-top:1rem;color:rgba(255,255,255,.35);font-size:.75rem;text-decoration:none">← Retour à l'accueil</a>
+  </div>
+</div>
+
+<div class="ov" id="apiOv">
+  <div class="modal">
+    <h3>🔑 Clé API OpenAI</h3>
+    <p>Pour générer menus et recettes dans l'app. Stockée uniquement sur cet appareil.</p>
+    <div class="hint">Obtenez votre clé sur <strong>platform.openai.com/api-keys</strong></div>
+    <input type="password" id="aki" placeholder="sk-proj-..." autocomplete="off">
+    <button class="bp" onclick="saveKey()">💾 Enregistrer</button>
+    <button class="bg" onclick="skipKey()">Passer</button>
+  </div>
+</div>
+
+<div class="ov" id="pfOv">
+  <div class="modal" style="max-width:540px;max-height:88vh;overflow-y:auto">
+    <h3>🎯 Préférences & Paramètres</h3>
+    <p>Guident l'IA à chaque génération. Multi-sélection possible.</p>
+    <div class="ps">
+      <span class="pl">👨‍👩‍👧‍👦 Composition de la famille</span>
+      <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-size:.78rem;color:var(--k2);font-weight:500">👨‍👩 Adultes</span>
+          <button onclick="adjFam('a',-1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem">−</button>
+          <span id="famA" style="font-size:1rem;font-weight:700;color:var(--sage);min-width:20px;text-align:center">2</span>
+          <button onclick="adjFam('a',1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem">+</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-size:.78rem;color:var(--k2);font-weight:500">🧒 Enfants</span>
+          <button onclick="adjFam('e',-1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem">−</button>
+          <span id="famE" style="font-size:1rem;font-weight:700;color:var(--sage);min-width:20px;text-align:center">3</span>
+          <button onclick="adjFam('e',1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="ps">
+      <span class="pl">🌀 Thermomix</span>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div id="tmxToggle" onclick="toggleTmx()" style="width:44px;height:24px;border-radius:99px;background:var(--sage);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+          <div id="tmxDot" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .2s;transform:translateX(20px)"></div>
+        </div>
+        <span id="tmxLabel" style="font-size:.8rem;color:var(--k2);font-weight:500">Activé — recettes adaptées Thermomix</span>
+      </div>
+    </div>
+    <div class="ps">
+      <span class="pl">🍽️ Types de cuisine</span>
+      <div class="chs" id="cc">
+        <span class="ch" data-v="cuisine française">🇫🇷 Français</span>
+        <span class="ch" data-v="cuisine italienne">🇮🇹 Italien</span>
+        <span class="ch" data-v="cuisine asiatique">🥢 Asiatique</span>
+        <span class="ch" data-v="cuisine méditerranéenne">🫒 Méditerranéen</span>
+        <span class="ch" data-v="cuisine mexicaine">🌮 Mexicain</span>
+        <span class="ch" data-v="cuisine indienne">🫕 Indien</span>
+        <span class="ch" data-v="cuisine du monde variée">🌍 Varié</span>
+        <span class="ch" data-v="recettes rapides">⚡ Rapide</span>
+      </div>
+    </div>
+    <div class="ps">
+      <span class="pl">🥗 Contraintes alimentaires</span>
+      <div class="chs" id="cd">
+        <span class="ch" data-v="aucune viande rouge">🥩 Sans viande rouge</span>
+        <span class="ch" data-v="un repas végétarien par jour">🥦 1 repas végé/j</span>
+        <span class="ch" data-v="sans gluten strict">🌾 Sans gluten</span>
+        <span class="ch" data-v="sans lactose">🥛 Sans lactose</span>
+        <span class="ch" data-v="régime FODMAP">🫀 FODMAP</span>
+        <span class="ch" data-v="sans porc">🐷 Sans porc</span>
+        <span class="ch" data-v="sans fruits de mer">🦐 Sans fruits de mer</span>
+        <span class="ch" data-v="favoriser le bio">🌱 Bio</span>
+      </div>
+    </div>
+    <div class="ps">
+      <span class="pl">⏱️ Temps de préparation</span>
+      <div class="chs" id="ct">
+        <span class="ch" data-v="maximum 20 minutes">🏃 Max 20 min</span>
+        <span class="ch" data-v="environ 30 minutes">🕐 ~30 min</span>
+        <span class="ch" data-v="environ 45 minutes">🕑 ~45 min</span>
+        <span class="ch" data-v="recettes longues acceptées le week-end">🍲 Mijotés week-end OK</span>
+      </div>
+    </div>
+    <div class="ps">
+      <span class="pl">✏️ Instructions libres</span>
+      <textarea class="ptx" id="pf" rows="3" placeholder="Ex: enfants n'aiment pas les épices fortes, on aime les plats en sauce..."></textarea>
+    </div>
+    <div class="pft">
+      <button class="bsc" onclick="closePf()">Annuler</button>
+      <button class="bp" id="pfgb" onclick="savePfGen()">✨ Enregistrer & Générer</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="gstOv">
+  <div class="modal" style="max-width:380px">
+    <h3>🎉 Repas avec invités</h3>
+    <p>Choisissez le jour, le repas et le nombre de convives — l'IA adapte les quantités et propose un plat festif.</p>
+    <div class="gst-days" id="gdays"></div>
+    <div class="gmeal" id="gmeal">
+      <div class="gmo on" id="gm0" onclick="selGMeal(0)">🌞 Déjeuner</div>
+      <div class="gmo" id="gm1" onclick="selGMeal(1)">🌙 Dîner</div>
+    </div>
+    <div class="er" style="margin-top:.8rem">
+      <span class="el">Nombre de personnes</span>
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <button onclick="adjGuests(-1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+        <span id="gstNum" style="font-size:1.2rem;font-weight:700;color:var(--sage);min-width:30px;text-align:center">8</span>
+        <button onclick="adjGuests(1)" style="background:var(--s2);border:1.5px solid var(--bd);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+        <span style="font-size:.78rem;color:var(--mt)">personnes</span>
+      </div>
+    </div>
+    <div class="pft" style="margin-top:.85rem">
+      <button class="bsc" onclick="closeGst()">Annuler</button>
+      <button class="bp" onclick="genGuest()">✨ Générer ce repas</button>
+    </div>
+  </div>
+</div>
+
+<div id="go">
+  <div class="gc">
+    <div class="gs"></div>
+    <div class="gt" id="gt">Génération en cours…</div>
+    <div class="gsb" id="gsb">Quelques secondes…</div>
+  </div>
+</div>
+
+<div class="ov" id="qrOv" onclick="closeQR()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:295px;text-align:center">
+    <h3 id="qrT" style="margin-bottom:.22rem"></h3>
+    <p id="qrS" style="font-size:.73rem;margin-bottom:0"></p>
+    <div id="qrCv"></div>
+    <a id="qrL" href="#" target="_blank" class="qlink">🔗 Ouvrir Cookidoo</a>
+    <button class="bp" onclick="closeQR()">Fermer</button>
+  </div>
+</div>
+
+<div class="ov" id="recOv" onclick="closeRec()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:510px;max-height:88vh;overflow-y:auto;padding:0">
+    <div class="rh">
+      <div><div class="rtg2">📖 Recette Thermomix</div><div class="rtl" id="recT"></div><div class="rts" id="recS"></div></div>
+      <button class="rcl" onclick="closeRec()">✕</button>
+    </div>
+    <div class="rb" id="recB"><div class="rload"><div class="gs"></div><div class="gsb">Préparation…</div></div></div>
+  </div>
+</div>
+
+<div class="ov" id="drOv" onclick="closeDr()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="drT" style="margin-bottom:.22rem"></h3>
+    <p id="drS" style="margin-bottom:.65rem;font-size:.78rem"></p>
+    <div class="dlst" id="drL"></div>
+    <div class="dbt">
+      <button class="db" style="background:var(--sage);color:white" onclick="copyDr()">📋 Copier</button>
+      <button class="db" style="background:var(--s2);color:var(--mt);border:1px solid var(--bd)" onclick="closeDr()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="edOv">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>✏️ Modifier ce repas</h3>
+    <p>Tapez juste le nom du plat — l'IA complète automatiquement les ingrédients, la recette Thermomix et le terme Cookidoo.</p>
+    <div class="er"><span class="el">Nom du plat</span><input class="ei" id="edName" placeholder="Ex: 2 quiches lorraines maison"></div>
+    <div class="er"><span class="el">Précisions (optionnel)</span><input class="ei" id="edNote" placeholder="Ex: sans lardons, version légère, pour les enfants..."></div>
+    <div id="edPreview" style="display:none;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:.75rem .9rem;font-size:.76rem;line-height:1.6;margin-bottom:.7rem;color:var(--k2)"></div>
+    <input type="hidden" id="edKey">
+    <div class="ef" id="edFoot">
+      <button class="esc" onclick="closeEdit()">Annuler</button>
+      <button class="bp" id="edBtn" onclick="autoEdit()">✨ Compléter avec l'IA</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="tb">
+    <div class="tbi">
+      <a href="index.html" style="color:var(--sage);text-decoration:none;font-size:.78rem;font-weight:500;display:flex;align-items:center;gap:.3rem;margin-right:.5rem">← Accueil</a>
+      <div class="br">
+        <div class="bd" id="sd"></div>
+        <span class="bn">Menu Famille</span>
+        <span class="bs">· Thermomix</span>
+      </div>
+      <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap">
+        <!-- Bouton 1: Renouveler sélection (visible seulement si des plats sont marqués 🔄) -->
+        <button class="tbtn" id="brs" onclick="regenSel()" style="display:none;background:#C47A1A;color:white">
+          🔄 Renouveler sélection <span style="background:white;color:#C47A1A;border-radius:99px;padding:.05rem .45rem;font-size:.65rem;font-weight:800;margin-left:.2rem" id="rcb">0</span>
+        </button>
+        <!-- Bouton 2: Générer menu complet -->
+        <button class="tbtn ts" onclick="openPf()">✨ Nouveau menu complet</button>
+        <div style="position:relative">
+          <button class="tbtn to" onclick="showPfOnly()" title="Préférences">🎯 Préférences</button>
+          <div class="pbdg" id="pbdg" style="display:none"></div>
+        </div>
+        <button class="tbtn to" onclick="openGst()" title="Dîner invités">🎉 Invités</button>
+        <button class="tbtn ti" onclick="showKey()" title="Clé API">⚙️</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nt">
+    <div class="ni">
+      <button class="nb on" onclick="swTab('menu',this)">📅 Menu</button>
+      <button class="nb" id="nbc" onclick="swTab('courses',this)">🛒 Courses</button>
+      <button class="nb" id="nbh" onclick="swTab('hist',this)">⭐ Historique</button>
+    </div>
+  </div>
+
+  <div class="rcp" id="rcpB"><div class="rcpi" id="rcpI"></div></div>
+
+  <main>
+    <div class="tab on" id="tab-menu">
+      <div class="leg" style="flex-direction:column;align-items:flex-start;gap:.5rem">
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--k2)">Cliquez sur le bouton d'un repas pour cycler :</span>
+          <span class="lch" style="background:var(--sxl);color:var(--sage)">✅ Garder</span>
+          <span style="font-size:.7rem;color:var(--mt)">→</span>
+          <span class="lch" style="background:var(--aml);color:var(--am)">🔄 Changer</span>
+          <span style="font-size:.7rem;color:var(--mt)">→</span>
+          <span class="lch" style="background:var(--rdl);color:var(--rd)">🗑️ Retirer</span>
+          <span style="font-size:.7rem;color:var(--mt)">→ retour à ✅</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--k2)">Pour renouveler :</span>
+          <span style="font-size:.75rem;color:var(--mt)">Marquez les plats en</span>
+          <span class="lch" style="background:var(--aml);color:var(--am)">🔄 Changer</span>
+          <span style="font-size:.75rem;color:var(--mt)">puis cliquez</span>
+          <span style="background:#C47A1A;color:white;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;font-weight:700">🔄 Renouveler sélection</span>
+          <span style="font-size:.75rem;color:var(--mt)">— ou</span>
+          <span style="background:var(--sage);color:white;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;font-weight:700">✨ Nouveau menu complet</span>
+          <span style="font-size:.75rem;color:var(--mt)">pour tout changer</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--k2)">Score :</span>
+          <span class="lch" style="background:var(--sxl);color:var(--sage)">A Excellent</span>
+          <span class="lch" style="background:var(--bll);color:var(--bl)">B Bon</span>
+          <span class="lch" style="background:var(--aml);color:var(--am)">C Correct</span>
+          <span style="color:#3B82F6">■</span>Prot
+          <span style="color:#F59E0B">■</span>Lip
+          <span style="color:#10B981">■</span>Glu
+        </div>
+      </div>
+      <div class="wg" id="mg"></div>
+    </div>
+
+    <div class="tab" id="tab-courses">
+      <div class="shdr2">
+        <div><div class="scnt" id="sc">0</div><div class="scl">articles restants</div></div>
+        <div class="stg" id="stg">✅ Tous actifs</div>
+      </div>
+      <div class="stb">
+        <button class="tbtn ts" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="tbtn to" onclick="clrChk()">↺ Décocher</button>
+        <button class="tbtn" style="background:#003D8F;color:white" onclick="openDr('leclerc')">🛒 Leclerc</button>
+        <button class="tbtn" style="background:#E30513;color:white" onclick="openDr('carrefour')">🛒 Carrefour</button>
+      </div>
+      <div class="sgd" id="sg"></div>
+    </div>
+
+    <div class="tab" id="tab-hist">
+      <p style="color:var(--mt);font-size:.78rem;margin-bottom:.9rem;line-height:1.6">Vos notes guident l'IA. Synchronisées famille.</p>
+      <div class="hgd" id="hg"></div>
+      <div id="he" style="text-align:center;padding:2.5rem;color:var(--mt);display:none">
+        <div style="font-size:2rem;margin-bottom:.6rem">⭐</div>
+        <p style="font-size:.8rem">Notez les plats dans l'onglet Menu.</p>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+const PW="famille2025";
+const FBC={apiKey:"AIzaSyA4tT621FrG1Ne39DibsFp_hcyKSIivYEA",authDomain:"menu-famille-96a3a.firebaseapp.com",databaseURL:"https://menu-famille-96a3a-default-rtdb.europe-west1.firebasedatabase.app",projectId:"menu-famille-96a3a",storageBucket:"menu-famille-96a3a.firebasestorage.app",messagingSenderId:"886399574894",appId:"1:886399574894:web:7a88a977c8bf7ad323d77f"};
+let db = null;
+try {
+  firebase.initializeApp(FBC);
+  db = firebase.database();
+} catch(e) {
+  console.warn('Firebase non disponible dans cet environnement (preview):', e.message);
+}
+
+// Thermomix glossary shown in recipes
+const TMX_GLOSS=`<div class="tmx-gloss"><strong>📖 Lexique Thermomix</strong>
+🌡️ <b>Varoma</b> = panier vapeur posé au-dessus du bol — cuit à la vapeur sans contact avec l'eau<br>
+⚡ <b>V1 à V10</b> = vitesse de rotation des lames (1=très lent, 10=très rapide, Turbo=maximum)<br>
+🔁 <b>Sens inverse ↺</b> = les lames tournent à l'envers pour ne pas hacher (pâtes, riz, morceaux)<br>
+🌀 <b>Papillon</b> = fouet qu'on fixe sur les lames pour les préparations délicates (purée, œufs)<br>
+🌡️ <b>Mode Mijotage</b> = cuisson douce à 95°C avec rotation lente<br>
+⏱️ Les temps sont indicatifs — vérifiez la cuisson selon votre Thermomix TM5/TM6</div>`;
+
+let MENU=[
+  {day:"Lundi",emoji:"🥕",wend:false,meals:[
+    {type:"Déjeuner",name:"Velouté carottes gingembre",desc:"Carottes, gingembre, lait de coco, oignon",thermo:"Varoma",cookidoo:"velouté carottes Thermomix",kcal:280,prot:5,lip:14,glu:32,score:"B",note:"Bêta-carotène"},
+    {type:"Dîner",name:"Saumon papillote & riz vapeur",desc:"Pavés de saumon, citron, aneth, haricots verts",thermo:"Varoma",cookidoo:"saumon papillote Thermomix",kcal:520,prot:38,lip:18,glu:48,score:"A",note:"Oméga-3"}
+  ]},
+  {day:"Mardi",emoji:"🍝",wend:false,meals:[
+    {type:"Déjeuner",name:"Bolognaise légumes & tagliatelles",desc:"Bœuf haché, courgette, tomates, carotte",thermo:"Cuisson",cookidoo:"bolognaise Thermomix",kcal:580,prot:32,lip:16,glu:68,score:"B",note:"Fer · fibres"},
+    {type:"Dîner",name:"Curry lentilles corail & épinards",desc:"Lentilles corail, lait de coco, épinards, curry",thermo:"Cuisson",cookidoo:"curry lentilles Thermomix",kcal:420,prot:18,lip:14,glu:52,score:"A",note:"Végétarien"}
+  ]},
+  {day:"Mercredi",emoji:"🍗",wend:false,meals:[
+    {type:"Déjeuner",name:"Poulet rôti & purée maison",desc:"Cuisses de poulet, pommes de terre, ail, persil",thermo:"Varoma",cookidoo:"poulet vapeur purée Thermomix",kcal:610,prot:42,lip:22,glu:55,score:"B",note:"Protéines"},
+    {type:"Dîner",name:"Soupe thaï crevettes & nouilles",desc:"Crevettes, lait de coco, citronnelle, nouilles",thermo:"Cuisson",cookidoo:"soupe thaï Thermomix",kcal:390,prot:24,lip:16,glu:38,score:"B",note:"Léger"}
+  ]},
+  {day:"Jeudi",emoji:"🐟",wend:false,meals:[
+    {type:"Déjeuner",name:"Cabillaud vapeur & quinoa herbes",desc:"Filets de cabillaud, quinoa, citron, persil",thermo:"Varoma",cookidoo:"cabillaud vapeur Thermomix",kcal:440,prot:40,lip:8,glu:48,score:"A",note:"Protéines pures"},
+    {type:"Dîner",name:"Gratin pâtes courgette jambon",desc:"Pâtes, courgettes, jambon, crème, fromage",thermo:"Cuisson",cookidoo:"gratin pâtes Thermomix",kcal:620,prot:28,lip:24,glu:68,score:"C",note:"Surveiller crème"}
+  ]},
+  {day:"Vendredi",emoji:"🎈",wend:false,meals:[
+    {type:"Déjeuner",name:"Burger maison & frites vapeur",desc:"Steak haché, pain burger, salade, tomate",thermo:"Varoma",cookidoo:"frites vapeur Thermomix",kcal:680,prot:36,lip:28,glu:65,score:"C",note:"Plaisir"},
+    {type:"Dîner",name:"Poêlée légumes & œufs cocotte",desc:"Poivrons, champignons, courgette, œufs",thermo:"Varoma",cookidoo:"oeufs cocotte Thermomix",kcal:320,prot:18,lip:18,glu:18,score:"A",note:"Léger"}
+  ]},
+  {day:"Samedi",emoji:"🎉",wend:true,meals:[
+    {type:"Déjeuner",name:"Risotto asperges & parmesan",desc:"Riz arborio, asperges, parmesan, bouillon",thermo:"Cuisson",cookidoo:"risotto asperges Thermomix",kcal:560,prot:18,lip:14,glu:88,score:"B",note:"Énergie"},
+    {type:"Dîner",name:"Tajine poulet citron confit",desc:"Poulet, citron confit, olives, ras el-hanout, semoule",thermo:"Varoma",cookidoo:"tajine poulet Thermomix",kcal:580,prot:38,lip:18,glu:58,score:"A",note:"Anti-inflam."}
+  ]},
+  {day:"Dimanche",emoji:"☀️",wend:true,meals:[
+    {type:"Déjeuner",name:"Pot-au-feu & légumes racines",desc:"Bœuf, navets, carottes, poireaux, bouquet garni",thermo:"Cuisson lente",cookidoo:"pot-au-feu Thermomix",kcal:520,prot:44,lip:16,glu:38,score:"A",note:"Collagène"},
+    {type:"Dîner",name:"Velouté poireaux & croûtons",desc:"Poireaux, pommes de terre, crème fraîche",thermo:"Varoma",cookidoo:"velouté poireaux Thermomix",kcal:310,prot:8,lip:12,glu:42,score:"B",note:"Prébiotiques"}
+  ]}
+];
+
+let SHOP=[
+  {cat:"Viandes & Poissons",color:"#B03A2E",icon:"🥩",items:[
+    {name:"Pavés de saumon",qty:"600 g",meals:["Saumon papillote & riz vapeur"]},
+    {name:"Filets de cabillaud",qty:"600 g",meals:["Cabillaud vapeur & quinoa herbes"]},
+    {name:"Crevettes décortiquées",qty:"400 g",meals:["Soupe thaï crevettes & nouilles"]},
+    {name:"Bœuf haché",qty:"700 g",meals:["Bolognaise légumes & tagliatelles","Burger maison & frites vapeur"]},
+    {name:"Cuisses de poulet",qty:"1,2 kg",meals:["Poulet rôti & purée maison","Tajine poulet citron confit"]},
+    {name:"Bœuf à braiser",qty:"800 g",meals:["Pot-au-feu & légumes racines"]},
+    {name:"Jambon tranches",qty:"200 g",meals:["Gratin pâtes courgette jambon"]},
+  ]},
+  {cat:"Légumes frais",color:"#1E7A3D",icon:"🥦",items:[
+    {name:"Carottes",qty:"1,5 kg",meals:["Velouté carottes gingembre","Bolognaise légumes & tagliatelles","Pot-au-feu & légumes racines"]},
+    {name:"Courgettes",qty:"5",meals:["Bolognaise légumes & tagliatelles","Gratin pâtes courgette jambon","Poêlée légumes & œufs cocotte"]},
+    {name:"Poireaux",qty:"4",meals:["Pot-au-feu & légumes racines","Velouté poireaux & croûtons"]},
+    {name:"Asperges vertes",qty:"500 g",meals:["Risotto asperges & parmesan"]},
+    {name:"Poivrons",qty:"3",meals:["Poêlée légumes & œufs cocotte"]},
+    {name:"Champignons",qty:"400 g",meals:["Poêlée légumes & œufs cocotte"]},
+    {name:"Épinards frais",qty:"300 g",meals:["Curry lentilles corail & épinards"]},
+    {name:"Haricots verts",qty:"400 g",meals:["Saumon papillote & riz vapeur"]},
+    {name:"Navets",qty:"3",meals:["Pot-au-feu & légumes racines"]},
+    {name:"Pommes de terre",qty:"2 kg",meals:["Poulet rôti & purée maison","Burger maison & frites vapeur","Velouté poireaux & croûtons"]},
+    {name:"Tomates fraîches",qty:"6",meals:["Bolognaise légumes & tagliatelles"]},
+    {name:"Salade verte",qty:"1",meals:["Burger maison & frites vapeur"]},
+    {name:"Gingembre frais",qty:"1 morceau",meals:["Velouté carottes gingembre"]},
+  ]},
+  {cat:"Fruits & Divers",color:"#6B3FA0",icon:"🍋",items:[
+    {name:"Citrons",qty:"4",meals:["Saumon papillote & riz vapeur","Cabillaud vapeur & quinoa herbes","Tajine poulet citron confit"]},
+    {name:"Citron confit",qty:"2",meals:["Tajine poulet citron confit"]},
+    {name:"Bananes",qty:"1 régime",meals:[]},{name:"Pommes",qty:"1 kg",meals:[]},
+  ]},
+  {cat:"Féculents & Céréales",color:"#B7570A",icon:"🌾",items:[
+    {name:"Riz basmati",qty:"500 g",meals:["Saumon papillote & riz vapeur"]},
+    {name:"Riz arborio",qty:"400 g",meals:["Risotto asperges & parmesan"]},
+    {name:"Tagliatelles",qty:"500 g",meals:["Bolognaise légumes & tagliatelles"]},
+    {name:"Pâtes courtes",qty:"500 g",meals:["Gratin pâtes courgette jambon"]},
+    {name:"Quinoa",qty:"400 g",meals:["Cabillaud vapeur & quinoa herbes"]},
+    {name:"Nouilles de riz",qty:"300 g",meals:["Soupe thaï crevettes & nouilles"]},
+    {name:"Semoule fine",qty:"400 g",meals:["Tajine poulet citron confit"]},
+    {name:"Pain burger",qty:"4",meals:["Burger maison & frites vapeur"]},
+  ]},
+  {cat:"Laitiers & Œufs",color:"#1A6A9A",icon:"🧀",items:[
+    {name:"Crème fraîche",qty:"3 briques",meals:["Gratin pâtes courgette jambon","Velouté poireaux & croûtons"]},
+    {name:"Beurre",qty:"250 g",meals:["Poulet rôti & purée maison"]},
+    {name:"Œufs",qty:"12",meals:["Poêlée légumes & œufs cocotte"]},
+    {name:"Parmesan râpé",qty:"120 g",meals:["Risotto asperges & parmesan"]},
+    {name:"Fromage râpé",qty:"200 g",meals:["Gratin pâtes courgette jambon"]},
+    {name:"Yaourts nature",qty:"8",meals:[]},
+  ]},
+  {cat:"Épicerie & Conserves",color:"#5D4037",icon:"🥫",items:[
+    {name:"Lait de coco",qty:"3 boîtes",meals:["Velouté carottes gingembre","Soupe thaï crevettes & nouilles","Curry lentilles corail & épinards"]},
+    {name:"Lentilles corail",qty:"400 g",meals:["Curry lentilles corail & épinards"]},
+    {name:"Tomates pelées",qty:"2 boîtes",meals:["Bolognaise légumes & tagliatelles","Curry lentilles corail & épinards"]},
+    {name:"Olives vertes",qty:"1 pot",meals:["Tajine poulet citron confit"]},
+    {name:"Bouillon cube",qty:"1 pack",meals:["Velouté carottes gingembre","Poulet rôti & purée maison","Risotto asperges & parmesan","Pot-au-feu & légumes racines"]},
+    {name:"Citronnelle",qty:"2 tiges",meals:["Soupe thaï crevettes & nouilles"]},
+    {name:"Huile d'olive",qty:"75 cl",meals:[]},
+  ]},
+  {cat:"Épices & Aromatiques",color:"#00796B",icon:"🌿",items:[
+    {name:"Curry en poudre",qty:"—",meals:["Curry lentilles corail & épinards"]},
+    {name:"Ras el-hanout",qty:"—",meals:["Tajine poulet citron confit"]},
+    {name:"Herbes de Provence",qty:"—",meals:["Poêlée légumes & œufs cocotte"]},
+    {name:"Aneth séché",qty:"—",meals:["Saumon papillote & riz vapeur"]},
+    {name:"Persil frais",qty:"1 botte",meals:["Poulet rôti & purée maison","Cabillaud vapeur & quinoa herbes"]},
+    {name:"Ail",qty:"1 tête",meals:["Poulet rôti & purée maison"]},
+    {name:"Oignons",qty:"1 kg",meals:[]},
+  ]}
+];
+
+const SC={A:{bg:"#EAF3EC",c:"#4A7C59"},B:{bg:"#EBF3FC",c:"#2C6BAD"},C:{bg:"#FEF3DC",c:"#C47A1A"},D:{bg:"#FEF0EE",c:"#C0392B"}};
+const SCYC={keep:"renew",renew:"remove",remove:"keep"};
+const SLB={keep:"✅ Garder",renew:"🔄 Changer",remove:"🗑️ Retirer"};
+const SCSS={keep:"sk",renew:"sn",remove:"sd"};
+const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+
+let states={},ratings={},chk={},prefs={c:[],d:[],t:[],f:"",adultes:2,enfants:3,tmx:true};
+let _lastSaveTime=0;
+let oaiKey=localStorage.getItem('tmx_oai')||'';
+let gstDay=0,gstMeal=0;
+
+// ── LOGIN ──
+function checkPw(){
+  const v=document.getElementById('pwi')?.value||'';
+  if(v===PW){
+    // Set ALL keys so every page recognizes the session
+    localStorage.setItem('fos_auth','1');
+    localStorage.setItem('famille_auth','1');
+    sessionStorage.setItem('fos_auth','1');
+    document.getElementById('ls').style.display='none';
+    loadPf();
+    if(!oaiKey)document.getElementById('apiOv').classList.add('show');
+    else startApp();
+  }else{
+    const err=document.getElementById('lerr');
+    if(err)err.style.display='block';
+    const pwi=document.getElementById('pwi');
+    if(pwi)pwi.value='';
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{ const pwi=document.getElementById('pwi'); if(pwi) pwi.addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();}); });
+function saveKey(){const k=document.getElementById('aki').value.trim();if(!k.startsWith('sk-')){alert('Clé invalide');return;}oaiKey=k;localStorage.setItem('tmx_oai',k);document.getElementById('apiOv').classList.remove('show');startApp();}
+function skipKey(){document.getElementById('apiOv').classList.remove('show');startApp();}
+function showKey(){document.getElementById('aki').value=oaiKey;document.getElementById('apiOv').classList.add('show');}
+
+// ── PREFS ──
+function loadPf(){const s=localStorage.getItem('tmx_prf');if(s)prefs=JSON.parse(s);updPfBadge();}
+function savePfLocal(){
+  prefs.c=[...document.querySelectorAll('#cc .ch.on')].map(c=>c.dataset.v);
+  prefs.d=[...document.querySelectorAll('#cd .ch.on')].map(c=>c.dataset.v);
+  prefs.t=[...document.querySelectorAll('#ct .ch.on')].map(c=>c.dataset.v);
+  prefs.f=document.getElementById('pf').value.trim();
+  prefs.adultes=parseInt(document.getElementById('famA')?.textContent||'2');
+  prefs.enfants=parseInt(document.getElementById('famE')?.textContent||'3');
+  const dot=document.getElementById('tmxDot');
+  prefs.tmx=dot?dot.style.transform==='translateX(20px)':true;
+  localStorage.setItem('tmx_prf',JSON.stringify(prefs));
+  updPfBadge();
+  // Update topbar family info
+  updFamLabel();
+}
+function updPfBadge(){const el=document.getElementById('pbdg');if(!el)return;const h=prefs.c.length||prefs.d.length||prefs.t.length||prefs.f;el.style.display=h?'block':'none';}
+function popPf(){
+  document.querySelectorAll('#cc .ch').forEach(c=>c.classList.toggle('on',prefs.c.includes(c.dataset.v)));
+  document.querySelectorAll('#cd .ch').forEach(c=>c.classList.toggle('on',prefs.d.includes(c.dataset.v)));
+  document.querySelectorAll('#ct .ch').forEach(c=>c.classList.toggle('on',prefs.t.includes(c.dataset.v)));
+  document.getElementById('pf').value=prefs.f||'';
+  const fa=document.getElementById('famA'),fe=document.getElementById('famE');
+  if(fa)fa.textContent=prefs.adultes||2;
+  if(fe)fe.textContent=prefs.enfants||3;
+  const dot=document.getElementById('tmxDot'),tog=document.getElementById('tmxToggle'),lbl=document.getElementById('tmxLabel');
+  const on=prefs.tmx!==false;
+  if(dot)dot.style.transform=on?'translateX(20px)':'translateX(0px)';
+  if(tog)tog.style.background=on?'var(--sage)':'#C7C7CC';
+  if(lbl)lbl.textContent=on?'Activé — recettes adaptées Thermomix':'Désactivé — recettes classiques';
+}
+function openPf(){popPf();document.getElementById('pfgb').textContent='✨ Enregistrer & Générer';document.getElementById('pfOv').classList.add('show');}
+function showPfOnly(){popPf();document.getElementById('pfgb').textContent='💾 Enregistrer';document.getElementById('pfOv').classList.add('show');}
+function closePf(){document.getElementById('pfOv').classList.remove('show');}
+function adjFam(type,d){
+  const key=type==='a'?'famA':'famE';
+  const el=document.getElementById(key); if(!el)return;
+  const v=Math.max(0,Math.min(10,parseInt(el.textContent||'0')+d));
+  el.textContent=v;
+}
+function toggleTmx(){
+  const tog=document.getElementById('tmxToggle');
+  const dot=document.getElementById('tmxDot');
+  const lbl=document.getElementById('tmxLabel');
+  const on=dot.style.transform==='translateX(20px)';
+  dot.style.transform=on?'translateX(0px)':'translateX(20px)';
+  tog.style.background=on?'#C7C7CC':'var(--sage)';
+  lbl.textContent=on?'Désactivé — recettes classiques (sans Thermomix)':'Activé — recettes adaptées Thermomix';
+}
+function savePfGen(){savePfLocal();closePf();if(document.getElementById('pfgb').textContent.includes('Générer'))regenAll();else toast('✅ Préférences enregistrées');}
+document.addEventListener('DOMContentLoaded',()=>{ document.querySelectorAll('.ch').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on'))); });
+function pfPrompt(){
+  const a=prefs.adultes||2,e=prefs.enfants||3,total=a+e;
+  const tmx=prefs.tmx!==false;
+  const p=[`Famille: ${a} adulte${a>1?'s':''} + ${e} enfant${e>1?'s':''} (${total} pers. total)`];
+  if(!tmx)p.push('IMPORTANT: recettes SANS Thermomix, cuisine classique uniquement');
+  else p.push('Recettes au Thermomix');
+  if(prefs.c.length)p.push('Cuisines: '+prefs.c.join(', '));
+  if(prefs.d.length)p.push('Contraintes alimentaires: '+prefs.d.join(', '));
+  if(prefs.t.length)p.push('Temps: '+prefs.t.join(', '));
+  if(prefs.f)p.push('Instructions: '+prefs.f);
+  return '\n'+p.join('\n');
+}
+
+// ── FIREBASE ──
+function sy(v){document.getElementById('sd').classList.toggle('sy',v);}
+function startApp(){
+  document.getElementById('app').style.display='block';
+  updFamLabel();
+  if(!db){sy(false);renderMenu();renderShop();renderHist();updBdg();return;}
+  sy(true);
+  // Simple reliable listener - ignore updates for 4s after local save
+  db.ref('famille').on('value',snap=>{
+    if(Date.now()-_lastSaveTime<4000){sy(false);return;}
+    const d=snap.val()||{};
+    states=d.states||{};ratings=d.ratings||{};chk=d.chk||{};
+    if(d.menu)MENU=d.menu;
+    if(d.shop)SHOP=d.shop;
+    sy(false);renderMenu();renderShop();renderHist();updBdg();
+  });
+}
+function fb(p,v){
+  // Update local state immediately for instant UI
+  if(p==='states'){states=v;renderMenu();renderShop();updBdg();}
+  else if(p==='ratings'){ratings=v;renderHist();updBdg();}
+  else if(p==='chk'){chk=v;renderShop();updBdg();}
+  // Save to Firebase
+  if(!db)return;
+  _lastSaveTime=Date.now();
+  db.ref('famille/'+p).set(v).then(()=>sy(false));
+}
+
+// ── AI ──
+async function ai(prompt,maxTok=800){
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${oaiKey}`},
+    body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:maxTok,temperature:0.8})
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r.status}`);}
+  const d=await r.json();
+  return d.choices[0].message.content.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+}
+function xJSON(t){const s=t.indexOf('['),e=t.lastIndexOf(']');if(s<0||e<0)throw new Error('JSON invalide');return JSON.parse(t.slice(s,e+1));}
+
+// ── REGEN ──
+function getRnw(){return Object.keys(states).filter(k=>states[k]==='renew').map(k=>{const[di,mi]=k.split('_').map(Number);return{k,di,mi,day:MENU[di].day,type:MENU[di].meals[mi].type,name:MENU[di].meals[mi].name};});}
+async function regenSel(){
+  const rm=getRnw();
+  if(!rm.length){
+    toast('Marquez au moins un plat 🔄 Changer, puis cliquez Renouveler');
+    return;
+  }
+  await doReg(rm,false);
+}
+async function regenAll(){
+  const all=MENU.flatMap((d,di)=>d.meals.map((_,mi)=>({
+    k:`${di}_${mi}`,di,mi,day:d.day,
+    type:d.meals[mi].type,name:d.meals[mi].name
+  }))).filter(m=>(states[m.k]||'keep')!=='remove');
+  if(!all.length){toast('Tous les repas sont retirés !');return;}
+  
+  // Split into batches of 7 max to avoid token limits
+  if(all.length > 7){
+    const ov=document.getElementById('go');ov.classList.add('show');
+    document.getElementById('gt').textContent='Nouveau menu complet…';
+    document.getElementById('gsb').textContent='Lot 1/2…';
+    const mid=Math.ceil(all.length/2);
+    await doReg(all.slice(0,mid),true);
+    document.getElementById('gsb').textContent='Lot 2/2…';
+    await doReg(all.slice(mid),true);
+    ov.classList.remove('show');
+    toast(`✨ Menu complet renouvelé !`);
+  } else {
+    await doReg(all,true);
+  }
+}
+
+async function doReg(rm,isAll){
+  if(!oaiKey){
+    showKey();
+    toast('⚙️ Configurez votre clé OpenAI via ⚙️');
+    return;
+  }
+  if(!rm||!rm.length){toast('Aucun plat à renouveler');return;}
+  const ov=document.getElementById('go');ov.classList.add('show');
+  document.getElementById('gt').textContent=isAll?'Nouveau menu complet…':`${rm.length} plat${rm.length>1?'s':''} à renouveler…`;
+  document.getElementById('gsb').textContent='~10 secondes…';
+  const loved=Object.entries(ratings).filter(([,v])=>v>=4).map(([k])=>k);
+  const hated=Object.entries(ratings).filter(([,v])=>v<=2).map(([k])=>k);
+  const keep=isAll?[]:MENU.flatMap(d=>d.meals).map(m=>m.name).filter(n=>!rm.find(r=>r.name===n));
+  const a=prefs.adultes||2,e=prefs.enfants||3;const p=`Expert nutrition. Remplace ${rm.length} plats pour famille ${a+e} pers (${a} adultes+${e} enfants).${pfPrompt()}
+Remplacer: ${rm.map(r=>`"${r.k}"|${r.day} ${r.type}|"${r.name}"`).join(' / ')}
+${keep.length?'Déjà au menu (éviter): '+keep.slice(0,8).join(', '):''}
+${loved.length?'Adorés: '+loved.join(', '):''}${hated.length?'\nÉviter: '+hated.join(', '):''}
+Règles: poisson≥2x/sem, légumineuses 1x, viande rouge≤1x.
+JSON uniquement: [{"k":"di_mi","name":"...","desc":"ingrédients","thermo":"Varoma|Cuisson|etc","cookidoo":"terme Thermomix","kcal":400,"prot":25,"lip":12,"glu":45,"score":"A","note":"bénéfice court"}]`;
+  try{
+    // For large batches, use more tokens
+    const maxTok = rm.length > 7 ? 4000 : 2000;
+    const raw=await ai(p,maxTok);
+    // Robust JSON extraction - handle truncated responses
+    let nm;
+    try { nm=xJSON(raw); } 
+    catch(jsonErr) {
+      // Try to salvage partial JSON
+      const si=raw.lastIndexOf('[');
+      const partial=raw.slice(si);
+      const lastComplete=partial.lastIndexOf('},');
+      if(lastComplete>0){
+        try{ nm=JSON.parse(partial.slice(0,lastComplete+1)+']'); }
+        catch{ throw new Error('JSON tronqué — réessayez'); }
+      } else throw new Error('Réponse IA incomplète — réessayez');
+    }
+    if(!nm||!nm.length) throw new Error('Aucun plat généré');
+    // Filter out malformed entries (name must not be placeholder)
+    const validNm = nm.filter(x => x.name && x.name.length > 3 && x.name !== 'Nom du plat' && x.desc && x.desc !== 'ingrédients principaux courts');
+    if(!validNm.length) throw new Error('Plats mal formatés — réessayez');
+    const nM=JSON.parse(JSON.stringify(MENU));
+    validNm.forEach(x=>{const[di,mi]=x.k.split('_').map(Number);if(!nM[di]?.meals[mi])return;nM[di].meals[mi]={type:nM[di].meals[mi].type,name:x.name,desc:x.desc||'',thermo:x.thermo||'Thermomix',cookidoo:x.cookidoo||x.name,kcal:x.kcal||400,prot:x.prot||25,lip:x.lip||12,glu:x.glu||45,score:x.score||'B',note:x.note||''};});
+    const ns={...states};rm.forEach(r=>delete ns[r.k]);
+    // Update local state immediately - don't wait for Firebase listener
+    MENU = nM;
+    states = ns;
+    // Save to Firebase async
+    if(db){ db.ref('famille/menu').set(nM); db.ref('famille/states').set(ns); }
+    ov.classList.remove('show');
+    renderMenu(); renderShop(); updBdg();
+    toast(`✨ ${nm.length} plat${nm.length>1?'s':''} renouvelé${nm.length>1?'s':''}!`);
+  }catch(e){ov.classList.remove('show');if(e.message.includes('401'))toast('❌ Clé API invalide');else if(e.message.includes('429'))toast('❌ Quota dépassé, réessayez');else toast('❌ '+e.message.slice(0,50));}
+}
+
+// ── GUEST DINNER ──
+function openGst(){
+  const gc=document.getElementById('gdays');gc.innerHTML='';
+  MENU.forEach((d,i)=>{const el=document.createElement('div');el.className='gday'+(i===gstDay?' on':'');el.textContent=d.day.slice(0,3);el.onclick=()=>{document.querySelectorAll('.gday').forEach(x=>x.classList.remove('on'));el.classList.add('on');gstDay=i;};gc.appendChild(el);});
+  selGMeal(gstMeal);
+  document.getElementById('gstOv').classList.add('show');
+}
+function selGMeal(m){gstMeal=m;document.getElementById('gm0').classList.toggle('on',m===0);document.getElementById('gm1').classList.toggle('on',m===1);}
+function closeGst(){document.getElementById('gstOv').classList.remove('show');}
+async function genGuest(){
+  if(!oaiKey){showKey();closeGst();return;}
+  closeGst();
+  const ov=document.getElementById('go');ov.classList.add('show');
+  document.getElementById('gt').textContent='Dîner invités 10 personnes…';
+  document.getElementById('gsb').textContent='Recette pour 10…';
+  const day=MENU[gstDay].day,mType=gstMeal===0?'Déjeuner':'Dîner';
+  const gNum=parseInt(document.getElementById('gstNum')?.textContent||'8');
+  document.getElementById('gt').textContent=`Repas invités — ${gNum} personnes…`;
+  const p=`Expert Thermomix. Propose UN plat élaboré pour ${gNum} personnes (repas avec invités, ${day} ${mType}).${pfPrompt()}
+Plat festif mais faisable au Thermomix, impressionnant, pas trop compliqué.
+JSON: [{"k":"${gstDay}_${gstMeal}","name":"...","desc":"ingrédients (10 pers)","thermo":"mode Thermomix","cookidoo":"terme Thermomix","kcal":550,"prot":35,"lip":20,"glu":50,"score":"A","note":"note"}]`;
+  try{
+    const raw=await ai(p,500);const nm=xJSON(raw);
+    if(!nm[0])throw new Error('Pas de réponse');
+    const nM=JSON.parse(JSON.stringify(MENU));
+    const x=nm[0];const gN2=parseInt(document.getElementById('gstNum')?.textContent||'8');nM[gstDay].meals[gstMeal]={...nM[gstDay].meals[gstMeal],name:'🎉 '+x.name,desc:x.desc+' — '+gN2+' pers.',thermo:x.thermo,cookidoo:x.cookidoo,kcal:x.kcal,prot:x.prot,lip:x.lip,glu:x.glu,score:x.score,note:x.note};
+    MENU = nM;
+    if(db) db.ref('famille/menu').set(nM);
+    ov.classList.remove('show');
+    renderMenu(); renderShop(); updBdg();
+    toast(`🎉 Repas invités : ${x.name}`);
+  }catch(e){ov.classList.remove('show');toast('❌ '+e.message.slice(0,50));}
+}
+
+// ── RENDER MENU ──
+function renderMenu(){
+  const grid=document.getElementById('mg');grid.innerHTML='';
+  let rc=0,dc=0;Object.values(states).forEach(v=>{if(v==='renew')rc++;if(v==='remove')dc++;});
+  const rb=document.getElementById('rcpB');
+  if(rc>0||dc>0){
+    rb.classList.add('show');
+    document.getElementById('rcpI').innerHTML=`<span style="font-size:.7rem;color:var(--mt)">Cette semaine :</span>
+    ${rc>0?`<span class="rtg" style="background:var(--aml);color:var(--am)">🔄 ${rc} à changer</span>`:''}
+    ${dc>0?`<span class="rtg" style="background:var(--rdl);color:var(--rd)">🗑️ ${dc} retiré${dc>1?'s':''}</span>`:''}
+    <button class="rrs" onclick="fb('states',{});toast('↺ Tout remis à ✅')">Tout remettre à ✅</button>`;
+  }else rb.classList.remove('show');
+  document.getElementById('rcb').textContent=rc;
+
+  MENU.forEach((day,di)=>{
+    const card=document.createElement('div');card.className='dc';
+    let h=`<div class="dh ${day.wend?'we':'wk'}"><span class="dn">${day.day}</span><span style="font-size:1rem">${day.emoji}</span></div>`;
+    day.meals.forEach((meal,mi)=>{
+      const st=states[`${di}_${mi}`]||'keep';
+      const sc=SC[meal.score]||SC.B;
+      const tot=(meal.prot||0)+(meal.lip||0)+(meal.glu||0)||1;
+      const pp=Math.round((meal.prot||0)/tot*100),lp=Math.round((meal.lip||0)/tot*100),gp=100-pp-lp;
+      const mk=`${di}_${mi}`;
+      h+=`<div class="ml ${st==='remove'?'rm':st==='renew'?'rn':''}">
+        <div class="mt"><div class="mlt">
+          <div class="mtp">${meal.type}</div>
+          <div class="mn">${st==='renew'?'🔄 ':''}${meal.name}</div>
+        </div><button class="sb2 ${SCSS[st]}" onclick="cyc(${di},${mi})">${SLB[st]}</button></div>`;
+      if(st==='remove') h+=`<div class="mh hd2">Retiré · courses masquées</div>`;
+      else if(st==='renew') h+=`<div class="mh hr">À changer — cliquez "Renouveler"</div>`;
+      else{
+        h+=`<div class="md">${meal.desc}</div>
+        <div class="nr">
+          <div class="kc">🔥 <strong>${meal.kcal}</strong> kcal</div>
+          <div class="sc" style="background:${sc.bg};color:${sc.c};font-weight:800;font-size:.78rem;padding:.18rem .55rem">${meal.score}</div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:.68rem;font-weight:600">
+            <span style="color:#3B82F6">${pp}%P</span>
+            <span style="color:var(--mt)">·</span>
+            <span style="color:#F59E0B">${lp}%L</span>
+            <span style="color:var(--mt)">·</span>
+            <span style="color:#10B981">${gp}%G</span>
+          </div>
+          <button class="mb2" onclick="togMx('${mk}')">▼</button>
+        </div>
+        <div class="mx" id="mx_${mk}">
+          <div class="mxb"><div class="xp" style="width:${pp}%"></div><div class="xl" style="width:${lp}%"></div><div class="xg" style="width:${gp}%"></div></div>
+          <div class="mxl"><span style="color:#3B82F6;font-weight:600">Protéines ${meal.prot||0}g (${pp}%)</span><span style="color:#F59E0B;font-weight:600">Lipides ${meal.lip||0}g (${lp}%)</span><span style="color:#10B981;font-weight:600">Glucides ${meal.glu||0}g (${gp}%)</span></div>
+          <div class="mxn">Par portion adulte · enfants ≈ 60%</div>
+        </div>
+        <div class="tgs">
+          <a class="ctag" href="https://cookidoo.fr/search/fr-FR?query=${encodeURIComponent(meal.cookidoo||meal.name)}" target="_blank" style="text-decoration:none">
+            <span>🔍 Cookidoo</span>
+          </a>
+          <button class="rbtn" onclick="showRec('${meal.name.replace(/'/g,"\\'")}','${meal.desc.replace(/'/g,"\\'")}','${(meal.cookidoo||meal.name).replace(/'/g,"\\'")}')">📖 Recette</button>
+          <button class="ebtn" onclick="openEdit('${mk}')">✏️</button>
+          ${meal.thermo?`<span class="ttag2">⏱️ ${meal.thermo.replace(/.*?(\d+\s*min).*/i,'$1').replace(/^(?!.*min).*$/,'—')}</span>`:''}
+        </div>
+        <div class="str">
+          ${[1,2,3,4,5].map(n=>`<span class="st ${(ratings[meal.name]||0)>=n?'on':''}" onclick="rate('${meal.name.replace(/'/g,"\\'")}',${n})">★</span>`).join('')}
+          <span class="stl">${['','Bof','Moyen','Bien','Très bien','😍 Top !'][ratings[meal.name]||0]||''}</span>
+        </div>`;
+      }
+      h+=`</div>`;
+    });
+    card.innerHTML=h;grid.appendChild(card);
+  });
+}
+function cyc(di,mi){const k=`${di}_${mi}`,nx=SCYC[states[k]||'keep'];fb('states',{...states,[k]:nx});toast({keep:'✅ Conservé',renew:'🔄 Marqué',remove:'🗑️ Retiré'}[nx]);}
+function togMx(k){const b=document.getElementById('mx_'+k);if(!b)return;b.classList.toggle('op');const btn=b.previousElementSibling?.querySelector('.mb2');if(btn)btn.textContent=b.classList.contains('op')?'▲':'▼';}
+
+// ── QR ──
+function showQR(name,term){
+  const url=`https://cookidoo.fr/search/fr-FR?query=${encodeURIComponent(term)}`;
+  document.getElementById('qrT').textContent=name;
+  document.getElementById('qrS').textContent=`« ${term} »`;
+  document.getElementById('qrL').href=url;
+  const c=document.getElementById('qrCv');c.innerHTML='';
+  new QRCode(c,{text:url,width:155,height:155,colorDark:'#1C1C1E',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+  document.getElementById('qrOv').classList.add('show');
+}
+function closeQR(){document.getElementById('qrOv').classList.remove('show');}
+
+// ── RECIPE ──
+async function showRec(name,desc,cookidoo){
+  document.getElementById('recT').textContent=name;
+  document.getElementById('recS').textContent=desc;
+  document.getElementById('recB').innerHTML='<div class="rload"><div class="gs"></div><div class="gsb">Génération recette…</div></div>';
+  document.getElementById('recOv').classList.add('show');
+  if(!oaiKey){document.getElementById('recB').innerHTML=`<div style="padding:1.2rem;color:var(--rd);font-size:.8rem">⚙️ Configurez votre clé API pour les recettes.</div>`;return;}
+  const url=`https://cookidoo.fr/search/fr-FR?query=${encodeURIComponent(cookidoo)}`;
+  const p=`Recette Thermomix "${name}" pour 5 personnes. Explications TRÈS claires pour débutant complet.
+Utilise du langage simple: "mettez dans le bol", "appuyez sur Start", PAS de jargon.
+Si tu mentionnes Varoma, explique entre parenthèses que c'est le panier vapeur.
+Si tu mentionnes une vitesse, explique (V5 = vitesse 5, couteaux tournent modérément).
+JSON uniquement:
+{"ingredients":["500g de X","3 Y"],"steps":[{"title":"Titre simple","detail":"Explication claire pour débutant","speed":"V5","temp":"100°C","time":"10 min"}],"tip":"astuce utile pour débutant"}`;
+  try{
+    const raw=await ai(p,900);
+    const ci=raw.indexOf('{'),ce=raw.lastIndexOf('}');
+    const r=JSON.parse(raw.slice(ci,ce+1));
+    let html=TMX_GLOSS;
+    html+=`<a class="cbox" href="${url}" target="_blank">
+      <span style="font-size:1.1rem">🔍</span>
+      <div><div class="cbl">Rechercher sur Cookidoo</div><div class="cbt">« ${cookidoo} »</div></div>
+    </a>
+    <a class="clnk" href="${url}" target="_blank">🔗 Ouvrir directement dans le navigateur →</a>
+    <div class="rsec">
+      <div class="rstt rs-s">🥗 Ingrédients — 5 personnes</div>
+      <div class="ig">${(r.ingredients||[]).map(i=>`<div class="ir"><span class="id">·</span>${i}</div>`).join('')}</div>
+    </div>
+    <div class="rsec">
+      <div class="rstt rs-r">🌀 Étapes — suivez dans l'ordre</div>
+      ${(r.steps||[]).map((s,i)=>`<div class="scard2">
+        <div class="stop">
+          <div class="snm"><span class="snum">${i+1}</span>${s.title}</div>
+          <div class="sbgs">
+            ${s.speed?`<span class="sbg sv">⚡${s.speed}</span>`:''}
+            ${s.temp?`<span class="sbg sa2">🌡️${s.temp}</span>`:''}
+            ${s.time?`<span class="sbg st2">⏱️${s.time}</span>`:''}
+          </div>
+        </div>
+        <div class="sdt">${s.detail}</div>
+      </div>`).join('')}
+    </div>
+    ${r.tip?`<div class="tip2">💡 <strong>Astuce :</strong> ${r.tip}</div>`:''}`;
+    document.getElementById('recB').innerHTML=html;
+  }catch(e){document.getElementById('recB').innerHTML=`<div style="padding:1.2rem;color:var(--rd);font-size:.8rem">❌ ${e.message}</div>`;}
+}
+function closeRec(){document.getElementById('recOv').classList.remove('show');}
+
+// ── RATING ──
+function rate(name,val){fb('ratings',{...ratings,[name]:val});toast(`${val>=4?'🌟':val<=2?'👎':'👌'} ${['','Bof','Moyen','Bien','Très bien','😍 Top !'][val]}`);}
+function delRate(name){const nr={...ratings};delete nr[name];fb('ratings',nr);toast('🗑️ Note supprimée');}
+
+// ── SHOP ──
+function getRm(){const s=new Set();Object.keys(states).forEach(k=>{if(states[k]==='remove'){const[di,mi]=k.split('_').map(Number);const m=MENU[di]?.meals[mi];if(m)s.add(m.name);}});return s;}
+function isOff(item,rm){return item.meals?.length>0&&item.meals.every(m=>rm.has(m));}
+function renderShop(){
+  const rm=getRm(),dc=Object.values(states).filter(v=>v==='remove').length;
+  const act=SHOP.flatMap(c=>c.items).filter(i=>!isOff(i,rm));
+  const rem=act.filter(i=>!chk[i.name]).length;
+  document.getElementById('sc').textContent=rem;
+  document.getElementById('stg').textContent=dc>0?`✅ ${dc} retiré${dc>1?'s':''}`:'✅ Tous actifs';
+  const grid=document.getElementById('sg');grid.innerHTML='';
+  SHOP.forEach(cat=>{
+    const a=cat.items.filter(i=>!isOff(i,rm)),off=cat.items.filter(i=>isOff(i,rm));
+    const card=document.createElement('div');card.className='scd';
+    let h=`<div class="shd" style="background:${cat.color}">
+      <span style="font-size:14px">${cat.icon}</span>
+      <span class="scn">${cat.cat}</span>
+      ${off.length?`<span class="smn">-${off.length}</span>`:''}
+    </div><div class="srs">`;
+    a.forEach(item=>{h+=`<div class="sr2 ${chk[item.name]?'dn':''}" onclick="togChk('${item.name.replace(/'/g,"\\'")}')">
+      <div class="ck"></div><span class="ilb">${item.name}</span><span class="iqu">${item.qty}</span></div>`;});
+    if(off.length){h+=`<div class="isp">`;off.forEach(i=>{h+=`<div class="iof"><div class="cko"></div><span style="font-size:.71rem;flex:1;text-decoration:line-through;color:var(--mt)">${i.name}</span></div>`;});h+=`</div>`;}
+    h+=`</div>`;card.innerHTML=h;grid.appendChild(card);
+  });
+  updBdg();
+}
+function togChk(n){fb('chk',{...chk,[n]:!chk[n]});}
+function clrChk(){fb('chk',{});toast('↺ Réinitialisée');}
+
+let drTxt='';
+function openDr(shop){
+  const rm=getRm(),n=shop==='leclerc'?'Leclerc Drive':'Carrefour Drive';
+  let txt=`🛒 ${n} — ${new Date().toLocaleDateString('fr-FR')}\n\n`;
+  SHOP.forEach(cat=>{const a=cat.items.filter(i=>!isOff(i,rm)&&!chk[i.name]);if(!a.length)return;txt+=`── ${cat.cat} ──\n`;a.forEach(i=>{txt+=`□ ${i.name}${i.qty&&i.qty!=='—'?' ('+i.qty+')':''}\n`;});txt+='\n';});
+  document.getElementById('drT').textContent=`Export ${n}`;
+  document.getElementById('drS').innerHTML=`<a href="${shop==='leclerc'?'https://www.leclercdrive.fr':'https://www.carrefour.fr/drive'}" target="_blank" style="color:var(--sage)">Ouvrir ${n} →</a>`;
+  document.getElementById('drL').textContent=txt;drTxt=txt;
+  document.getElementById('drOv').classList.add('show');
+}
+function closeDr(){document.getElementById('drOv').classList.remove('show');}
+function copyDr(){navigator.clipboard.writeText(drTxt).then(()=>{toast('📋 Copié !');closeDr();}).catch(()=>toast('Sélectionnez et copiez manuellement'));}
+
+// ── HIST ──
+function renderHist(){
+  const grid=document.getElementById('hg'),empty=document.getElementById('he');
+  const e=Object.entries(ratings).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!e.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=e.map(([n,s])=>`<div class="hcd">
+    <div class="hst" style="color:${s>=4?'#F59E0B':s<=2?'#C0392B':'#8E8E93'}">${'★'.repeat(s)}${'☆'.repeat(5-s)}</div>
+    <div style="flex:1;min-width:0"><div class="hnm">${n}</div>
+    <span class="hbd ${s>=4?'hl':s<=2?'hs':'ho'}">${s>=4?'⬆ Répéter':s<=2?'⬇ Éviter':'↔ Neutre'}</span></div>
+    <button class="hd3" onclick="delRate('${n.replace(/'/g,"\\'")}')">🗑️</button>
+  </div>`).join('');
+}
+function updFamLabel(){
+  const el=document.querySelector('.bs');
+  if(!el)return;
+  const a=prefs.adultes||2,e=prefs.enfants||3,t=prefs.tmx!==false;
+  el.textContent=`· ${a} adulte${a>1?'s':''} · ${e} enfant${e>1?'s':''} ${t?'· Thermomix':''}`;
+}
+function updBdg(){
+  const rm=getRm(),rem=SHOP.flatMap(c=>c.items).filter(i=>!isOff(i,rm)&&!chk[i.name]).length;
+  document.getElementById('nbc').textContent=`🛒 Courses${rem>0?` (${rem})`:''}`;
+  const rc=Object.keys(ratings).filter(k=>ratings[k]>0).length;
+  document.getElementById('nbh').textContent=`⭐ Historique${rc>0?` (${rc})`:''}`;
+}
+function swTab(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));document.getElementById('tab-'+id).classList.add('on');btn.classList.add('on');}
+let gstPersons=8;
+function adjGuests(d){const el=document.getElementById('gstNum');if(!el)return;const v=Math.max(2,Math.min(30,parseInt(el.textContent||'8')+d));el.textContent=v;}
+
+// ── EDIT MEAL ──
+let edResult=null;
+function openEdit(mk){
+  const[di,mi]=mk.split('_').map(Number);
+  const meal=MENU[di].meals[mi];
+  document.getElementById('edName').value=meal.name||'';
+  document.getElementById('edNote').value='';
+  document.getElementById('edKey').value=mk;
+  document.getElementById('edPreview').style.display='none';
+  document.getElementById('edBtn').textContent='✨ Compléter avec l\'IA';
+  document.getElementById('edFoot').innerHTML=`<button class="esc" onclick="closeEdit()">Annuler</button><button class="bp" id="edBtn" onclick="autoEdit()">✨ Compléter avec l'IA</button>`;
+  edResult=null;
+  document.getElementById('edOv').classList.add('show');
+}
+function closeEdit(){document.getElementById('edOv').classList.remove('show');edResult=null;}
+
+async function autoEdit(){
+  if(!oaiKey){saveManual();return;}
+  const name=document.getElementById('edName').value.trim();
+  if(!name){toast('Entrez un nom de plat');return;}
+  const note=document.getElementById('edNote').value.trim();
+  const btn=document.getElementById('edBtn');
+  btn.textContent='⏳ Génération…';btn.disabled=true;
+  const p=`Recette Thermomix "${name}"${note?' ('+note+')':''} pour famille 5 personnes.
+JSON uniquement: {"desc":"ingrédients principaux courts","thermo":"mode Thermomix court","cookidoo":"terme recherche Cookidoo Thermomix","kcal":450,"prot":28,"lip":15,"glu":50,"score":"B","note":"bénéfice court","ingredients":[{"name":"Nom ingrédient","qty":"quantité"}]}`;
+  try{
+    const raw=await ai(p,300);
+    const ci=raw.indexOf('{'),ce=raw.lastIndexOf('}');
+    const r=JSON.parse(raw.slice(ci,ce+1));
+    edResult={name,desc:r.desc,thermo:r.thermo,cookidoo:r.cookidoo,kcal:r.kcal||400,prot:r.prot||25,lip:r.lip||12,glu:r.glu||45,score:r.score||'B',note:r.note||'',ingredients:r.ingredients||[]};
+    // Show preview
+    const prev=document.getElementById('edPreview');
+    prev.innerHTML=`<strong style="color:var(--sage)">${name}</strong><br>
+🥗 ${r.desc}<br>
+🌀 Thermomix : ${r.thermo}<br>
+🔍 Cookidoo : « ${r.cookidoo} »<br>
+🔥 ${r.kcal} kcal · Score ${r.score}`;
+    prev.style.display='block';
+    document.getElementById('edFoot').innerHTML=`<button class="esc" onclick="closeEdit()">Annuler</button><button class="bp" onclick="confirmEdit()" style="background:var(--sage)">✅ Confirmer & enregistrer</button>`;
+  }catch(e){
+    toast('❌ Erreur IA — sauvegarde du nom uniquement');
+    saveManual();
+  }
+}
+
+async function confirmEdit(){
+  if(!edResult)return;
+  const mk=document.getElementById('edKey').value;
+  const[di,mi]=mk.split('_').map(Number);
+  const nM=JSON.parse(JSON.stringify(MENU));
+  const oldName=nM[di].meals[mi].name;
+  nM[di].meals[mi]={...nM[di].meals[mi],...edResult};
+  // Update shop: replace old meal name with new in all items
+  const nS=JSON.parse(JSON.stringify(SHOP));
+  nS.forEach(cat=>cat.items.forEach(item=>{
+    if(item.meals&&item.meals.includes(oldName)){
+      item.meals=item.meals.map(m=>m===oldName?edResult.name:m);
+    }
+  }));
+  // Add new ingredients from AI if provided
+  if(edResult.ingredients&&edResult.ingredients.length){
+    // Find or create "Divers / édités" category and add new items
+    let editCat=nS.find(c=>c.cat==='Ajouts manuels');
+    if(!editCat){editCat={cat:'Ajouts manuels',color:'#607D8B',icon:'✏️',items:[]};nS.push(editCat);}
+    edResult.ingredients.forEach(ing=>{
+      if(!nS.flatMap(c=>c.items).find(i=>i.name.toLowerCase()===ing.name.toLowerCase())){
+        editCat.items.push({name:ing.name,qty:ing.qty||'—',meals:[edResult.name]});
+      }
+    });
+  }
+  if(db){_lastSaveTime=Date.now();await db.ref('famille/menu').set(nM);await db.ref('famille/shop').set(nS);}
+  closeEdit();toast('✅ Repas et courses mis à jour !');
+}
+
+async function saveManual(){
+  // fallback: save name only
+  const mk=document.getElementById('edKey').value;
+  const name=document.getElementById('edName').value.trim();
+  if(!name)return;
+  const[di,mi]=mk.split('_').map(Number);
+  const nM=JSON.parse(JSON.stringify(MENU));
+  nM[di].meals[mi]={...nM[di].meals[mi],name};
+  await db.ref('famille/menu').set(nM);
+  closeEdit();toast('✅ Nom mis à jour');
+}
+
+let tt2;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt2);tt2=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── AUTO SESSION CHECK ──
+// Check multiple storage keys for auth (set by index.html or previous login)
+(function(){
+  const auth = localStorage.getItem('fos_auth')==='1' ||
+               sessionStorage.getItem('fos_auth')==='1' ||
+               localStorage.getItem('famille_auth')==='1';
+  if(auth){
+    const ls=document.getElementById('ls');
+    if(ls) ls.style.display='none';
+    loadPf();
+    if(!oaiKey) document.getElementById('apiOv').classList.add('show');
+    else startApp();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a3a5c">
+<title>Famille · Famille OS</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#2C6BAD;--bll:#EBF3FC;--sage:#4A7C59;--sxl:#EAF3EC;--ink:#1C1C1E;--k2:#48484A;--mt:#8E8E93;--bg:#F5F2ED;--sf:#FFF;--bd:#E5E5EA;--rd:#C0392B;--rdl:#FEF0EE;--am:#C47A1A;--aml:#FEF3DC;--safe-top:env(safe-area-inset-top,0px)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:5rem}
+.topbar{background:linear-gradient(160deg,#1a3a5c,#2C6BAD);padding:calc(var(--safe-top) + .9rem) 1.4rem .9rem;display:flex;align-items:center;gap:.75rem}
+.back{color:white;text-decoration:none;font-size:.9rem;opacity:.7;display:flex;align-items:center;gap:.3rem}
+.tb-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:white;font-weight:700;flex:1}
+.tb-add{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .75rem;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* FAMILY CARD */
+.fam-card{background:linear-gradient(135deg,#1a3a5c,#2C6BAD);margin:1rem;border-radius:18px;padding:1.2rem 1.4rem;color:white}
+.fam-nom{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:.2rem}
+.fam-sub{font-size:.75rem;opacity:.55}
+.fam-edit{float:right;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .7rem;font-size:.74rem;cursor:pointer;color:white;font-family:'Inter',sans-serif;margin-top:.25rem}
+.fam-stats{display:flex;gap:.5rem;margin-top:1rem}
+.fstat{flex:1;background:rgba(255,255,255,.1);border-radius:10px;padding:.6rem;text-align:center}
+.fstat-val{font-size:1.4rem;font-weight:700;line-height:1}
+.fstat-lbl{font-size:.62rem;opacity:.6;margin-top:.18rem}
+
+/* MEMBERS */
+main{padding:0 1rem 1rem}
+.sec{font-size:.72rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.09em;margin:1.2rem 0 .65rem}
+.members-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.member-card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:1rem;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer;transition:all .2s}
+.member-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.mc-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:.6rem}
+.mc-name{font-size:.9rem;font-weight:700;color:var(--ink)}
+.mc-age{font-size:.72rem;color:var(--mt);margin-top:.12rem}
+.mc-role{font-size:.65rem;font-weight:600;padding:.12rem .5rem;border-radius:99px;margin-top:.35rem;display:inline-block}
+.role-adult{background:var(--bll);color:var(--blue)}
+.role-teen{background:#F3E8FF;color:#7C3AED}
+.role-child{background:var(--sxl);color:var(--sage)}
+.mc-edit{position:absolute;top:.7rem;right:.7rem;background:var(--bg);border:none;border-radius:7px;padding:.2rem .45rem;font-size:.7rem;cursor:pointer;color:var(--mt)}
+.mc-prefs{margin-top:.6rem;display:flex;flex-wrap:wrap;gap:.25rem}
+.mc-pref{font-size:.6rem;background:var(--bg);border-radius:99px;padding:.1rem .45rem;color:var(--k2)}
+
+/* ADD MEMBER BTN */
+.add-member{background:var(--sf);border:2px dashed var(--bd);border-radius:16px;padding:1.2rem;text-align:center;cursor:pointer;color:var(--mt);font-size:.8rem;transition:all .2s}
+.add-member:hover{border-color:var(--blue);color:var(--blue)}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:900;display:none;align-items:flex-end;justify-content:center;padding:0}
+.ov.show{display:flex}
+.sheet{background:var(--sf);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:1.4rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 1.2rem}
+.sheet h3{font-size:1rem;font-weight:700;margin-bottom:.25rem}
+.sheet p{font-size:.8rem;color:var(--mt);margin-bottom:1rem;line-height:1.5}
+.frow{margin-bottom:.75rem}
+.flbl{font-size:.7rem;font-weight:700;color:var(--k2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;display:block}
+.finp{width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:.62rem .88rem;font-family:'Inter',sans-serif;font-size:.85rem;color:var(--ink);outline:none;transition:border .2s;background:var(--sf)}
+.finp:focus{border-color:var(--blue)}
+.fsel{width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:.62rem .88rem;font-family:'Inter',sans-serif;font-size:.85rem;color:var(--ink);outline:none;background:var(--sf);cursor:pointer}
+.avatar-grid{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.35rem}
+.av-opt{width:44px;height:44px;border-radius:50%;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;transition:all .15s}
+.av-opt.on{border-color:var(--blue);background:var(--bll)}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
+.chip{border:1.5px solid var(--bd);border-radius:99px;padding:.22rem .72rem;font-size:.74rem;cursor:pointer;background:var(--sf);color:var(--k2);transition:all .12s;user-select:none}
+.chip.on{background:var(--blue);border-color:var(--blue);color:white}
+.sfoot{display:flex;gap:.5rem;margin-top:1rem}
+.sfoot .sbp{flex:1;background:var(--blue);color:white;border:none;border-radius:10px;padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer}
+.sfoot .sbs{flex:1;background:var(--bg);color:var(--k2);border:1.5px solid var(--bd);border-radius:10px;padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer}
+.del-btn{width:100%;margin-top:.6rem;background:var(--rdl);color:var(--rd);border:none;border-radius:10px;padding:.65rem;font-family:'Inter',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer}
+
+/* FAM NAME MODAL */
+.ov2{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:910;display:none;align-items:center;justify-content:center;padding:1rem}
+.ov2.show{display:flex}
+.modal2{background:var(--sf);border-radius:16px;padding:1.4rem;width:100%;max-width:360px}
+.modal2 h3{font-size:.95rem;font-weight:700;margin-bottom:.7rem}
+
+/* BNAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);display:flex;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom,0px));z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;text-decoration:none;cursor:pointer;padding:.3rem 0}
+.bnav-ico{font-size:1.25rem;line-height:1}
+.bnav-lbl{font-size:.58rem;font-weight:500;color:var(--mt)}
+.bnav-item.on .bnav-lbl{color:var(--blue)}
+
+#toast{position:fixed;bottom:calc(4.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(80px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:var(--ink);color:white;padding:.55rem 1.1rem;border-radius:99px;font-size:.8rem;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="back">← Accueil</a>
+  <span class="tb-title">La Famille</span>
+  <button class="tb-add" onclick="openAddMember()">+ Membre</button>
+</div>
+
+<!-- FAMILY CARD -->
+<div class="fam-card">
+  <button class="fam-edit" onclick="openEditFam()">✏️ Modifier</button>
+  <div class="fam-nom" id="famNom">Famille</div>
+  <div class="fam-sub" id="famLoc">📍 Maisons-Laffitte</div>
+  <div class="fam-stats" id="famStats"></div>
+</div>
+
+<main>
+  <div class="sec">Membres de la famille</div>
+  <div class="members-grid" id="membersGrid"></div>
+  <div class="add-member" onclick="openAddMember()" style="margin-top:.65rem">
+    + Ajouter un membre
+  </div>
+</main>
+
+<!-- MEMBER SHEET -->
+<div class="ov" id="memberOv">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="sheetTitle">Nouveau membre</h3>
+    <p>Ces informations personnalisent les recommandations films, livres et cadeaux.</p>
+    <div class="frow">
+      <span class="flbl">Prénom</span>
+      <input class="finp" id="mPrenom" placeholder="Ex: Augustin">
+    </div>
+    <div class="frow">
+      <span class="flbl">Année de naissance</span>
+      <input class="finp" id="mAnnee" type="number" placeholder="Ex: 2012" min="1950" max="2025">
+    </div>
+    <div class="frow">
+      <span class="flbl">Sexe</span>
+      <select class="fsel" id="mSexe">
+        <option value="m">Garçon / Homme</option>
+        <option value="f">Fille / Femme</option>
+      </select>
+    </div>
+    <div class="frow">
+      <span class="flbl">Avatar</span>
+      <div class="avatar-grid" id="avatarGrid"></div>
+    </div>
+    <div class="frow">
+      <span class="flbl">Préférences (films, livres, cadeaux)</span>
+      <div class="chips" id="prefChips">
+        <span class="chip" data-v="sport">⚽ Sport</span>
+        <span class="chip" data-v="musique">🎵 Musique</span>
+        <span class="chip" data-v="lecture">📚 Lecture</span>
+        <span class="chip" data-v="jeux-video">🎮 Jeux vidéo</span>
+        <span class="chip" data-v="dessin">🎨 Dessin</span>
+        <span class="chip" data-v="nature">🌿 Nature</span>
+        <span class="chip" data-v="sciences">🔬 Sciences</span>
+        <span class="chip" data-v="cuisine">🍳 Cuisine</span>
+        <span class="chip" data-v="animaux">🐾 Animaux</span>
+        <span class="chip" data-v="voyage">✈️ Voyage</span>
+        <span class="chip" data-v="cinema">🎬 Cinéma</span>
+        <span class="chip" data-v="theatre">🎭 Théâtre</span>
+      </div>
+    </div>
+    <input type="hidden" id="mId">
+    <div class="sfoot">
+      <button class="sbs" onclick="closeMember()">Annuler</button>
+      <button class="sbp" onclick="saveMember()">💾 Enregistrer</button>
+    </div>
+    <button class="del-btn" id="delBtn" onclick="deleteMember()" style="display:none">🗑️ Supprimer ce membre</button>
+  </div>
+</div>
+
+<!-- FAM NAME MODAL -->
+<div class="ov2" id="famOv">
+  <div class="modal2">
+    <h3>✏️ Paramètres famille</h3>
+    <div class="frow">
+      <span class="flbl">Nom de famille</span>
+      <input class="finp" id="famNomInp" placeholder="Ex: Famille Martin">
+    </div>
+    <div class="frow">
+      <span class="flbl">Ville</span>
+      <input class="finp" id="famLocInp" placeholder="Ex: Maisons-Laffitte">
+    </div>
+    <div class="sfoot">
+      <button class="sbs" onclick="closeFam()">Annuler</button>
+      <button class="sbp" style="background:var(--blue)" onclick="saveFam()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bnav">
+  <a href="index.html" class="bnav-item"><span class="bnav-ico">🏠</span><span class="bnav-lbl">Accueil</span></a>
+  <a href="famille.html" class="bnav-item on"><span class="bnav-ico">👨‍👩‍👧‍👦</span><span class="bnav-lbl">Famille</span></a>
+  <a href="menu.html" class="bnav-item"><span class="bnav-ico">🍲</span><span class="bnav-lbl">Menu</span></a>
+  <a href="films.html" class="bnav-item"><span class="bnav-ico">🎬</span><span class="bnav-lbl">Films</span></a>
+  <a href="cadeaux.html" class="bnav-item"><span class="bnav-ico">🎁</span><span class="bnav-lbl">Cadeaux</span></a>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const FB={apiKey:"AIzaSyA4tT621FrG1Ne39DibsFp_hcyKSIivYEA",authDomain:"menu-famille-96a3a.firebaseapp.com",databaseURL:"https://menu-famille-96a3a-default-rtdb.europe-west1.firebasedatabase.app",projectId:"menu-famille-96a3a",storageBucket:"menu-famille-96a3a.firebasestorage.app",messagingSenderId:"886399574894",appId:"1:886399574894:web:7a88a977c8bf7ad323d77f"};
+let db=null;
+try{firebase.initializeApp(FB);db=firebase.database();}catch(e){}
+
+const AVATARS_M=['👦','👧','🧑','👱','👨','🧔','👴','🧒'];
+const AVATARS_F=['👧','👱‍♀️','👩','👩‍🦰','👩‍🦱','👵','🧒'];
+const AVATARS_ALL=['👦','👧','👨','👩','🧔','👱','🧒','🧓','👴','👵'];
+
+let membres=[];
+let famInfo={nom:'Famille',loc:'Maisons-Laffitte'};
+let editId=null;
+let selAvatar='👦';
+let selPrefs=[];
+
+function load(){
+  const m=localStorage.getItem('fos_membres');
+  if(m)membres=JSON.parse(m);
+  const f=localStorage.getItem('fos_famille');
+  if(f)famInfo=JSON.parse(f);
+  render();
+}
+
+function save(){
+  localStorage.setItem('fos_membres',JSON.stringify(membres));
+  if(db)db.ref('famille/membres').set(membres);
+}
+
+function render(){
+  document.getElementById('famNom').textContent=famInfo.nom||'Famille';
+  document.getElementById('famLoc').textContent='📍 '+(famInfo.loc||'');
+  const adults=membres.filter(m=>getAge(m.annee)>=18);
+  const kids=membres.filter(m=>getAge(m.annee)<18);
+  document.getElementById('famStats').innerHTML=`
+    <div class="fstat"><div class="fstat-val">${membres.length}</div><div class="fstat-lbl">Membres</div></div>
+    <div class="fstat"><div class="fstat-val">${adults.length}</div><div class="fstat-lbl">Adultes</div></div>
+    <div class="fstat"><div class="fstat-val">${kids.length}</div><div class="fstat-lbl">Enfants</div></div>
+    <div class="fstat"><div class="fstat-val">${getNextBirthday()}</div><div class="fstat-lbl">Prochain anniv.</div></div>
+  `;
+  const grid=document.getElementById('membersGrid');
+  if(!membres.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--mt);font-size:.82rem">Ajoutez les membres de votre famille pour commencer</div>`;
+    return;
+  }
+  grid.innerHTML=membres.map(m=>{
+    const age=getAge(m.annee);
+    const role=age>=18?'Adulte':age>=13?'Ado':'Enfant';
+    const roleClass=age>=18?'role-adult':age>=13?'role-teen':'role-child';
+    return`<div class="member-card" onclick="openEditMember('${m.id}')">
+      <button class="mc-edit" onclick="event.stopPropagation();openEditMember('${m.id}')">✏️</button>
+      <div class="mc-avatar" style="background:${age>=18?'#EBF3FC':age>=13?'#F3E8FF':'#EAF3EC'}">${m.avatar||'👤'}</div>
+      <div class="mc-name">${m.prenom}</div>
+      <div class="mc-age">${age} ans · né en ${m.annee}</div>
+      <span class="mc-role ${roleClass}">${role}</span>
+      ${m.prefs&&m.prefs.length?`<div class="mc-prefs">${m.prefs.slice(0,3).map(p=>`<span class="mc-pref">${p}</span>`).join('')}${m.prefs.length>3?`<span class="mc-pref">+${m.prefs.length-3}</span>`:''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function getAge(annee){return new Date().getFullYear()-(annee||2000);}
+function getNextBirthday(){
+  if(!membres.length)return'—';
+  const now=new Date();
+  let min=365,name='';
+  membres.forEach(m=>{
+    if(!m.annee)return;
+    const bd=new Date(now.getFullYear(),m.mois?m.mois-1:0,m.jour||1);
+    if(bd<now)bd.setFullYear(bd.getFullYear()+1);
+    const diff=Math.ceil((bd-now)/(1000*60*60*24));
+    if(diff<min){min=diff;name=m.prenom;}
+  });
+  return name?`${name} (${min}j)`:'—';
+}
+
+function openAddMember(){
+  editId=null;selAvatar='👦';selPrefs=[];
+  document.getElementById('sheetTitle').textContent='Nouveau membre';
+  document.getElementById('mPrenom').value='';
+  document.getElementById('mAnnee').value='';
+  document.getElementById('mSexe').value='m';
+  document.getElementById('delBtn').style.display='none';
+  renderAvatars();renderPrefChips();
+  document.getElementById('memberOv').classList.add('show');
+}
+function openEditMember(id){
+  const m=membres.find(x=>x.id===id);if(!m)return;
+  editId=id;selAvatar=m.avatar||'👦';selPrefs=m.prefs||[];
+  document.getElementById('sheetTitle').textContent='Modifier '+m.prenom;
+  document.getElementById('mPrenom').value=m.prenom||'';
+  document.getElementById('mAnnee').value=m.annee||'';
+  document.getElementById('mSexe').value=m.sexe||'m';
+  document.getElementById('delBtn').style.display='block';
+  document.getElementById('mId').value=id;
+  renderAvatars();renderPrefChips();
+  document.getElementById('memberOv').classList.add('show');
+}
+function closeMember(){document.getElementById('memberOv').classList.remove('show');}
+
+function renderAvatars(){
+  const g=document.getElementById('avatarGrid');
+  g.innerHTML=AVATARS_ALL.map(a=>`<div class="av-opt ${a===selAvatar?'on':''}" onclick="selAvatar='${a}';renderAvatars()">${a}</div>`).join('');
+}
+function renderPrefChips(){
+  document.querySelectorAll('#prefChips .chip').forEach(c=>{
+    c.classList.toggle('on',selPrefs.includes(c.dataset.v));
+    c.onclick=()=>{c.classList.toggle('on');selPrefs=c.classList.contains('on')?[...selPrefs,c.dataset.v]:selPrefs.filter(p=>p!==c.dataset.v);};
+  });
+}
+
+function saveMember(){
+  const prenom=document.getElementById('mPrenom').value.trim();
+  const annee=parseInt(document.getElementById('mAnnee').value)||2010;
+  const sexe=document.getElementById('mSexe').value;
+  if(!prenom){toast('Entrez un prénom');return;}
+  if(editId){
+    const idx=membres.findIndex(m=>m.id===editId);
+    if(idx>=0)membres[idx]={...membres[idx],prenom,annee,sexe,avatar:selAvatar,prefs:selPrefs};
+  } else {
+    membres.push({id:Date.now().toString(),prenom,annee,sexe,avatar:selAvatar,prefs:selPrefs});
+  }
+  save();render();closeMember();
+  toast(editId?`✅ ${prenom} mis à jour`:`✅ ${prenom} ajouté(e) !`);
+}
+function deleteMember(){
+  const id=document.getElementById('mId').value;
+  const m=membres.find(x=>x.id===id);
+  if(!m||!confirm(`Supprimer ${m.prenom} ?`))return;
+  membres=membres.filter(x=>x.id!==id);
+  save();render();closeMember();toast('🗑️ Membre supprimé');
+}
+
+function openEditFam(){
+  document.getElementById('famNomInp').value=famInfo.nom||'';
+  document.getElementById('famLocInp').value=famInfo.loc||'';
+  document.getElementById('famOv').classList.add('show');
+}
+function closeFam(){document.getElementById('famOv').classList.remove('show');}
+function saveFam(){
+  famInfo.nom=document.getElementById('famNomInp').value.trim()||'Famille';
+  famInfo.loc=document.getElementById('famLocInp').value.trim()||'';
+  localStorage.setItem('fos_famille',JSON.stringify(famInfo));
+  if(db)db.ref('famille/famInfo').set(famInfo);
+  render();closeFam();toast('✅ Informations mises à jour');
+}
+
+// Init default family if empty
+function initDefaults(){
+  if(!membres.length){
+    const defaults=[
+      {id:'1',prenom:'Olivier',annee:1985,sexe:'m',avatar:'👨',prefs:['cinema','voyage','cuisine']},
+      {id:'2',prenom:'Votre femme',annee:1987,sexe:'f',avatar:'👩',prefs:['lecture','musique','nature']},
+      {id:'3',prenom:'Augustin',annee:2012,sexe:'m',avatar:'👦',prefs:['sport','jeux-video']},
+      {id:'4',prenom:'Gabin',annee:2017,sexe:'m',avatar:'👦',prefs:['sport','animaux']},
+      {id:'5',prenom:'Basile',annee:2019,sexe:'m',avatar:'🧒',prefs:['dessin','animaux']},
+    ];
+    membres=defaults;
+    save();
+  }
+}
+
+let tt;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000);}
+
+initDefaults();
+load();
+
+// Sync from Firebase
+if(db){
+  db.ref('famille/membres').on('value',snap=>{const v=snap.val();if(v&&Array.isArray(v)){membres=v;render();}});
+  db.ref('famille/famInfo').on('value',snap=>{const v=snap.val();if(v){famInfo=v;render();}});
+}
+// Session guard
+if(localStorage.getItem('fos_auth')!=='1' && localStorage.getItem('famille_auth')!=='1' && sessionStorage.getItem('fos_auth')!=='1'){
+  // Show mini-login overlay
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:linear-gradient(145deg,#2D4A35,#1a2e20);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:1rem;padding:2rem';
+  ov.innerHTML=`<div style="font-size:2rem">🏠</div>
+    <h2 style="font-family:Playfair Display,serif;color:white;font-size:1.6rem">Famille OS</h2>
+    <input id="quickPw" type="password" placeholder="Mot de passe" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:12px;padding:.75rem 1.2rem;font-size:.9rem;text-align:center;outline:none;width:260px;letter-spacing:.1em">
+    <button onclick="const v=document.getElementById('quickPw').value;if(v==='famille2025'){localStorage.setItem('fos_auth','1');localStorage.setItem('famille_auth','1');sessionStorage.setItem('fos_auth','1');location.reload();}else{alert('Mot de passe incorrect');}" style="background:#6A9E79;color:white;border:none;border-radius:12px;padding:.75rem 2rem;font-size:.9rem;font-weight:600;cursor:pointer;width:260px">Entrer →</button>
+    <a href="index.html" style="color:rgba(255,255,255,.35);font-size:.75rem;text-decoration:none">← Accueil</a>`;
+  document.body.appendChild(ov);
+  document.getElementById('quickPw').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.nextElementSibling.click();});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Famille OS">
+<meta name="theme-color" content="#1a2e20">
+<title>Famille OS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--sage:#4A7C59;--sxl:#EAF3EC;--ink:#1C1C1E;--bg:#F5F2ED;--sf:#FFF;--bd:#E5E5EA;--mt:#8E8E93;--am:#C47A1A;--rd:#C0392B;--safe-top:env(safe-area-inset-top,0px)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;min-height:100dvh}
+
+/* LOGIN */
+#ls{position:fixed;inset:0;background:linear-gradient(160deg,#1a2e20 0%,#2D4A35 60%,#3d5e45 100%);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;padding:2rem}
+.lcard{text-align:center;width:100%;max-width:320px}
+.llogo{font-size:3rem;margin-bottom:1rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))}
+.lcard h1{font-family:'Playfair Display',serif;font-size:2.2rem;color:white;margin-bottom:.3rem}
+.lcard p{color:rgba(255,255,255,.45);font-size:.85rem;margin-bottom:2rem}
+.linput{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:14px;padding:.85rem 1.3rem;font-family:'Inter',sans-serif;font-size:1rem;text-align:center;letter-spacing:.12em;outline:none;margin-bottom:1rem}
+.linput::placeholder{color:rgba(255,255,255,.3);letter-spacing:0}
+.lbtn{width:100%;background:var(--sage);color:white;border:none;border-radius:14px;padding:.9rem;font-family:'Inter',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+.lbtn:hover{background:#3a6347;transform:translateY(-1px)}
+.lerr{color:#FF6B6B;font-size:.82rem;margin-top:.65rem;display:none}
+.lhint{color:rgba(255,255,255,.25);font-size:.72rem;margin-top:1.2rem;line-height:1.6}
+
+/* APP */
+#app{display:none;min-height:100vh;min-height:100dvh;display:none;flex-direction:column}
+
+/* HEADER */
+.appbar{background:linear-gradient(160deg,#1a2e20,#2D4A35);padding:calc(var(--safe-top) + .9rem) 1.4rem .9rem;display:flex;align-items:center;justify-content:space-between}
+.appbar-brand{display:flex;align-items:center;gap:.7rem}
+.appbar-icon{font-size:1.4rem}
+.appbar-title{font-family:'Playfair Display',serif;font-size:1.15rem;color:white;font-weight:700}
+.appbar-sub{font-size:.7rem;color:rgba(255,255,255,.45);margin-top:.05rem}
+.appbar-fam{font-size:.72rem;color:rgba(255,255,255,.5);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:.22rem .75rem;cursor:pointer}
+
+/* HERO */
+.hero{background:linear-gradient(160deg,#1a2e20,#2D4A35);padding:0 1.4rem 1.8rem}
+.hero-date{color:rgba(255,255,255,.45);font-size:.75rem;margin-bottom:.3rem}
+.hero-greeting{font-family:'Playfair Display',serif;font-size:1.6rem;color:white;line-height:1.2;margin-bottom:1.2rem}
+.hero-greeting em{color:#E8C060;font-style:italic}
+
+/* QUICK STATS */
+.quick-stats{display:flex;gap:.6rem;margin-bottom:0}
+.qstat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .9rem;flex:1;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.qstat:hover{background:rgba(255,255,255,.18)}
+.qstat-icon{font-size:1.2rem;margin-bottom:.2rem}
+.qstat-label{font-size:.62rem;color:rgba(255,255,255,.55);font-weight:500}
+.qstat-val{font-size:.78rem;color:white;font-weight:700;margin-top:.1rem}
+
+/* NAV GRID */
+main{flex:1;padding:1.2rem 1.1rem 5rem;background:var(--bg)}
+.section-title{font-size:.72rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.75rem;margin-top:1.2rem}
+.section-title:first-child{margin-top:0}
+
+.nav-grid{display:flex;flex-direction:column;gap:.55rem}
+.nav-card{border-radius:16px;overflow:hidden;text-decoration:none;display:flex;align-items:center;gap:.85rem;padding:.95rem 1.1rem;box-shadow:0 1px 4px rgba(0,0,0,.08);transition:all .2s}
+.nav-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.nav-card-icon{font-size:2rem;line-height:1;flex-shrink:0}
+.nav-card-content{display:flex;flex-direction:column}
+.nav-card-title{font-size:.88rem;font-weight:700;color:white;line-height:1.2}
+.nav-card-sub{font-size:.63rem;color:rgba(255,255,255,.6);margin-top:.15rem}
+.nav-card-badge{position:absolute;top:.75rem;right:.75rem;background:white;border-radius:99px;padding:.12rem .55rem;font-size:.62rem;font-weight:700}
+
+.nc-menu{background:linear-gradient(135deg,#2D5A38,#4A7C59)}
+.nc-famille{background:linear-gradient(135deg,#1a3a5c,#2C6BAD)}
+.nc-films{background:linear-gradient(135deg,#4a1a3a,#8B2FC9)}
+.nc-livres{background:linear-gradient(135deg,#5a3a1a,#C47A1A)}
+.nc-sorties{background:linear-gradient(135deg,#1a4a4a,#0F9D8F)}
+.nc-cadeaux{background:linear-gradient(135deg,#5a1a2a,#C0392B)}
+
+/* COMING SOON */
+.cs-badge{font-size:.6rem;font-weight:700;background:rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:99px;padding:.1rem .5rem;display:inline-block;margin-top:.2rem}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);display:flex;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom,0px));z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;text-decoration:none;cursor:pointer;padding:.3rem 0}
+.bnav-ico{font-size:1.25rem;line-height:1}
+.bnav-lbl{font-size:.58rem;font-weight:500;color:var(--mt);transition:color .2s}
+.bnav-item.on .bnav-lbl{color:var(--sage)}
+.bnav-item.on .bnav-ico{filter:none}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(4.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(80px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:var(--ink);color:white;padding:.55rem 1.1rem;border-radius:99px;font-size:.8rem;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* INSTALL BANNER */
+#installBanner{display:none;position:fixed;bottom:calc(4.5rem + env(safe-area-inset-bottom,0px));left:1rem;right:1rem;background:var(--ink);border-radius:14px;padding:1rem 1.2rem;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#installBanner.show{display:block}
+.ib-title{color:white;font-size:.88rem;font-weight:600;margin-bottom:.2rem}
+.ib-sub{color:rgba(255,255,255,.5);font-size:.75rem;line-height:1.5;margin-bottom:.85rem}
+.ib-btns{display:flex;gap:.5rem}
+.ib-btn{flex:1;border:none;border-radius:9px;padding:.6rem;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer}
+.ib-install{background:var(--sage);color:white}
+.ib-skip{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+
+
+</style>
+</head>
+<body>
+
+<div id="ls">
+  <div class="lcard">
+    <div class="llogo">🏠</div>
+    <h1>Famille OS</h1>
+    <p>Votre vie familiale, organisée</p>
+    <input id="pwi" class="linput" type="password" placeholder="Mot de passe famille" autocomplete="current-password">
+    <button class="lbtn" onclick="login()">Entrer →</button>
+    <div class="lerr" id="lerr">Mot de passe incorrect</div>
+    <p class="lhint">Partagez avec toute la famille<br>pour accéder à tous les outils</p>
+  </div>
+</div>
+
+<div id="installBanner">
+  <div class="ib-title">📱 Installer sur iPhone</div>
+  <div class="ib-sub">Appuyez sur <strong style="color:white">Partager</strong> puis <strong style="color:white">"Sur l'écran d'accueil"</strong> pour accéder à l'app comme une vraie application.</div>
+  <div class="ib-btns">
+    <button class="ib-btn ib-install" onclick="showInstallInstructions()">Voir comment faire</button>
+    <button class="ib-btn ib-skip" onclick="dismissInstall()">Plus tard</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;flex-direction:column;min-height:100vh">
+
+  <div class="appbar">
+    <div class="appbar-brand">
+      <span class="appbar-icon">🏠</span>
+      <div>
+        <div class="appbar-title">Famille OS</div>
+        <div class="appbar-sub" id="appSub">Chargement…</div>
+      </div>
+    </div>
+    <span class="appbar-fam" id="famBadge" onclick="window.location='famille.html'">👨‍👩‍👧‍👦</span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-date" id="heroDate"></div>
+    <div class="hero-greeting" id="heroGreeting">Bonjour <em>la famille !</em></div>
+    <div class="quick-stats">
+      <a href="menu.html" class="qstat">
+        <div class="qstat-icon">🍲</div>
+        <div class="qstat-label">Menu</div>
+        <div class="qstat-val">Ce soir</div>
+      </a>
+      <a href="films.html" class="qstat">
+        <div class="qstat-icon">🎬</div>
+        <div class="qstat-label">Films</div>
+        <div class="qstat-val" id="qs-films">À voir</div>
+      </a>
+      <a href="sorties.html" class="qstat">
+        <div class="qstat-icon">🎭</div>
+        <div class="qstat-label">Sorties</div>
+        <div class="qstat-val">Weekend</div>
+      </a>
+      <a href="cadeaux.html" class="qstat">
+        <div class="qstat-icon">🎁</div>
+        <div class="qstat-label">Cadeaux</div>
+        <div class="qstat-val" id="qs-gifts">Idées</div>
+      </a>
+    </div>
+  </div>
+
+  <main>
+    <div class="section-title">Outils famille</div>
+    <div class="nav-grid">
+
+      <a href="menu.html" class="nav-card nc-menu">
+        <div class="nav-card-icon">🍲</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Menu & Courses</div>
+          <div class="nav-card-sub">Menus Thermomix · Liste de courses</div>
+        </div>
+        <span style="color:rgba(255,255,255,.5);font-size:.9rem;margin-left:auto">›</span>
+      </a>
+      <a href="famille.html" class="nav-card nc-famille">
+        <div class="nav-card-icon">👨‍👩‍👧‍👦</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">La Famille</div>
+          <div class="nav-card-sub">Profils · Âges · Préférences</div>
+        </div>
+        <span style="color:rgba(255,255,255,.5);font-size:.9rem;margin-left:auto">›</span>
+      </a>
+      <a href="films.html" class="nav-card nc-films">
+        <div class="nav-card-icon">🎬</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Films & Cinéma</div>
+          <div class="nav-card-sub">Reco IA · Par âge · À voir</div>
+        </div>
+        <span style="color:rgba(255,255,255,.5);font-size:.9rem;margin-left:auto">›</span>
+      </a>
+      <a href="livres.html" class="nav-card nc-livres">
+        <div class="nav-card-icon">📚</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Livres</div>
+          <div class="nav-card-sub">Par âge · Wishlist · Reco IA</div>
+        </div>
+        <span style="background:rgba(255,255,255,.2);color:white;font-size:.6rem;font-weight:700;padding:.15rem .5rem;border-radius:99px;margin-left:auto;white-space:nowrap">Bientôt</span>
+      </a>
+      <a href="sorties.html" class="nav-card nc-sorties">
+        <div class="nav-card-icon">🎭</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Sorties</div>
+          <div class="nav-card-sub">Spectacles · Sport · Musées</div>
+        </div>
+        <span style="background:rgba(255,255,255,.2);color:white;font-size:.6rem;font-weight:700;padding:.15rem .5rem;border-radius:99px;margin-left:auto;white-space:nowrap">Bientôt</span>
+      </a>
+      <a href="cadeaux.html" class="nav-card nc-cadeaux">
+        <div class="nav-card-icon">🎁</div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Cadeaux</div>
+          <div class="nav-card-sub">Wishlists · Idées IA · Partage</div>
+        </div>
+        <span style="background:rgba(255,255,255,.2);color:white;font-size:.6rem;font-weight:700;padding:.15rem .5rem;border-radius:99px;margin-left:auto;white-space:nowrap">Bientôt</span>
+      </a>
+
+    </div>
+  </main>
+
+  <nav class="bnav">
+    <a href="index.html" class="bnav-item on">
+      <span class="bnav-ico">🏠</span><span class="bnav-lbl">Accueil</span>
+    </a>
+    <a href="famille.html" class="bnav-item">
+      <span class="bnav-ico">👨‍👩‍👧‍👦</span><span class="bnav-lbl">Famille</span>
+    </a>
+    <a href="menu.html" class="bnav-item">
+      <span class="bnav-ico">🍲</span><span class="bnav-lbl">Menu</span>
+    </a>
+    <a href="films.html" class="bnav-item">
+      <span class="bnav-ico">🎬</span><span class="bnav-lbl">Films</span>
+    </a>
+    <a href="cadeaux.html" class="bnav-item">
+      <span class="bnav-ico">🎁</span><span class="bnav-lbl">Cadeaux</span>
+    </a>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const PW = "famille2025";
+
+function login() {
+  if (document.getElementById('pwi').value === PW) {
+    localStorage.setItem('fos_auth', '1');
+    localStorage.setItem('famille_auth', '1');
+    sessionStorage.setItem('fos_auth', '1');
+    document.getElementById('ls').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    document.getElementById('lerr').style.display = 'block';
+    document.getElementById('pwi').value = '';
+  }
+}
+document.getElementById('pwi').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+
+function initApp() {
+  // Date
+  const now = new Date();
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  document.getElementById('heroDate').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const fam = JSON.parse(localStorage.getItem('fos_famille') || '{}');
+  const name = fam.nom || 'la famille';
+  document.getElementById('heroGreeting').innerHTML = `${greeting} <em>${name} !</em>`;
+
+  // Family badge
+  const members = JSON.parse(localStorage.getItem('fos_membres') || '[]');
+  const total = members.length || 5;
+  document.getElementById('famBadge').textContent = `👨‍👩‍👧‍👦 ${total} membres`;
+  document.getElementById('appSub').textContent = `${total} membres · synchronisé`;
+
+  // Films watched count
+  const films = JSON.parse(localStorage.getItem('fos_films') || '[]');
+  const aVoir = films.filter(f => !f.vu).length;
+  document.getElementById('qs-films').textContent = aVoir > 0 ? `${aVoir} à voir` : 'Ajouter';
+
+  // PWA install prompt
+  const dismissed = localStorage.getItem('fos_install_dismissed');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!dismissed && !isStandalone && /iPhone|iPad/.test(navigator.userAgent)) {
+    setTimeout(() => document.getElementById('installBanner').classList.add('show'), 2000);
+  }
+}
+
+function showInstallInstructions() {
+  alert('📱 Pour installer :\n\n1. Appuyez sur le bouton Partager ⬆️ en bas de Safari\n2. Faites défiler et appuyez sur "Sur l\'écran d\'accueil"\n3. Appuyez sur "Ajouter" en haut à droite\n\nL\'app apparaîtra comme une vraie appli sur votre iPhone !');
+  dismissInstall();
+}
+function dismissInstall() {
+  localStorage.setItem('fos_install_dismissed', '1');
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+// Auto-login if already authenticated
+if (localStorage.getItem('fos_auth')==='1' || localStorage.getItem('famille_auth')==='1' || sessionStorage.getItem('fos_auth')==='1') {
+  document.getElementById('ls').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initApp();
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+let tt;
+function toast(m) {
+  const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

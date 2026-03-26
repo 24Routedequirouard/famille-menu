@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#4a1a3a">
+<title>Films · Famille OS</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--pur:#7C3AED;--purl:#F3E8FF;--purb:#DDD6FE;--sage:#4A7C59;--ink:#1C1C1E;--k2:#48484A;--mt:#8E8E93;--bg:#F5F2ED;--sf:#FFF;--bd:#E5E5EA;--am:#C47A1A;--aml:#FEF3DC;--rd:#C0392B;--rdl:#FEF0EE;--bl:#2C6BAD;--bll:#EBF3FC;--safe-top:env(safe-area-inset-top,0px)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:5rem}
+.topbar{background:linear-gradient(160deg,#4a1a3a,#8B2FC9);padding:calc(var(--safe-top) + .9rem) 1.4rem .9rem;display:flex;align-items:center;gap:.75rem}
+.back{color:white;text-decoration:none;font-size:.9rem;opacity:.7}
+.tb-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:white;font-weight:700;flex:1}
+.tb-add{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .75rem;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* CONTEXT TABS */
+.ctx-bar{background:linear-gradient(160deg,#4a1a3a,#8B2FC9);padding:.3rem 1rem 1rem;overflow-x:auto;display:flex;gap:.5rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.ctx-bar::-webkit-scrollbar{display:none}
+.ctx-btn{flex-shrink:0;background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:.38rem .9rem;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.ctx-btn.on{background:white;color:#4a1a3a}
+
+/* FILTER BAR */
+.filter-bar{padding:.75rem 1rem;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;gap:.45rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
+.filter-bar::-webkit-scrollbar{display:none}
+.fbtn{flex-shrink:0;background:var(--bg);border:1.5px solid var(--bd);border-radius:99px;padding:.26rem .72rem;font-size:.72rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;white-space:nowrap}
+.fbtn.on{background:var(--pur);border-color:var(--pur);color:white}
+.fbtn-lbl{font-size:.7rem;color:var(--mt);flex-shrink:0;white-space:nowrap}
+
+/* RECO BTN */
+.reco-bar{padding:.75rem 1rem;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.6rem}
+.reco-desc{flex:1;font-size:.75rem;color:var(--mt);line-height:1.4}
+.reco-btn{flex-shrink:0;background:var(--pur);color:white;border:none;border-radius:10px;padding:.5rem .9rem;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s}
+.reco-btn:hover{background:#6D28D9}
+
+/* GEN OVERLAY */
+#go{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:800;display:none;align-items:center;justify-content:center}
+#go.show{display:flex}
+.gc{background:var(--sf);border-radius:16px;padding:1.8rem;text-align:center;max-width:260px;width:90%}
+.gs{width:40px;height:40px;border:3px solid var(--purl);border-top-color:var(--pur);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto .85rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* FILM CARDS */
+main{padding:.9rem 1rem}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;margin-top:1.1rem}
+.sec-hdr:first-child{margin-top:0}
+.sec-title{font-size:.72rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.09em}
+.sec-more{font-size:.72rem;color:var(--pur);cursor:pointer;font-weight:600}
+
+.films-scroll{display:flex;gap:.65rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:.3rem}
+.films-scroll::-webkit-scrollbar{display:none}
+.film-card{flex-shrink:0;width:140px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);cursor:pointer;transition:all .2s}
+.film-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.film-poster{height:100px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:linear-gradient(135deg,#4a1a3a,#8B2FC9)}
+.film-body{padding:.6rem .7rem}
+.film-title{font-size:.78rem;font-weight:700;line-height:1.2;margin-bottom:.2rem;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.film-meta{font-size:.63rem;color:var(--mt);margin-bottom:.35rem}
+.film-tags{display:flex;gap:.22rem;flex-wrap:wrap}
+.ftag{font-size:.58rem;background:var(--purl);color:var(--pur);border-radius:99px;padding:.08rem .42rem;font-weight:600}
+.ftag-vu{background:var(--bll);color:var(--bl)}
+.film-score{font-size:.68rem;font-weight:700;color:var(--am)}
+
+.film-list{display:flex;flex-direction:column;gap:.55rem}
+.film-row{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:.8rem .95rem;display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;transition:all .15s}
+.film-row:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.fr-poster{width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;background:linear-gradient(135deg,#4a1a3a,#8B2FC9)}
+.fr-info{flex:1;min-width:0}
+.fr-title{font-size:.84rem;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fr-meta{font-size:.68rem;color:var(--mt);margin-top:.1rem}
+.fr-tags{display:flex;gap:.22rem;flex-wrap:wrap;margin-top:.28rem}
+.fr-right{display:flex;flex-direction:column;align-items:flex-end;gap:.35rem;flex-shrink:0}
+.fr-score{font-size:.75rem;font-weight:700;color:var(--am)}
+.fr-stars{display:flex;gap:.08rem}
+.fr-star{font-size:.85rem;cursor:pointer;color:#D1D1D6}
+.fr-star.on{color:#F59E0B}
+
+/* STATES */
+.vu-btn{background:var(--bll);color:var(--bl);border:none;border-radius:6px;padding:.18rem .55rem;font-size:.65rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.vu-btn.vu{background:var(--purl);color:var(--pur)}
+.del-film{background:var(--rdl);color:var(--rd);border:none;border-radius:6px;padding:.18rem .52rem;font-size:.65rem;cursor:pointer}
+
+/* ADD FILM SHEET */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:900;display:none;align-items:flex-end;justify-content:center}
+.ov.show{display:flex}
+.sheet{background:var(--sf);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:1.4rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 1.1rem}
+.flbl{font-size:.7rem;font-weight:700;color:var(--k2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.28rem;display:block}
+.finp{width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:.6rem .85rem;font-family:'Inter',sans-serif;font-size:.84rem;color:var(--ink);outline:none;transition:border .2s;margin-bottom:.7rem}
+.finp:focus{border-color:var(--pur)}
+.fsel{width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:.6rem .85rem;font-family:'Inter',sans-serif;font-size:.84rem;color:var(--ink);outline:none;background:var(--sf);cursor:pointer;margin-bottom:.7rem}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem}
+.chip{border:1.5px solid var(--bd);border-radius:99px;padding:.22rem .72rem;font-size:.74rem;cursor:pointer;background:var(--sf);color:var(--k2);transition:all .12s;user-select:none}
+.chip.on{background:var(--pur);border-color:var(--pur);color:white}
+.sfoot{display:flex;gap:.5rem;margin-top:.4rem}
+.sfoot .sbp{flex:1;background:var(--pur);color:white;border:none;border-radius:10px;padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer}
+.sfoot .sbs{flex:1;background:var(--bg);color:var(--k2);border:1.5px solid var(--bd);border-radius:10px;padding:.7rem;font-family:'Inter',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer}
+
+/* EMPTY */
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--mt)}
+.empty-ico{font-size:2.5rem;margin-bottom:.65rem}
+.empty-txt{font-size:.82rem;line-height:1.6}
+
+/* BNAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);display:flex;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom,0px));z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;text-decoration:none;cursor:pointer;padding:.3rem 0}
+.bnav-ico{font-size:1.25rem;line-height:1}
+.bnav-lbl{font-size:.58rem;font-weight:500;color:var(--mt)}
+.bnav-item.on .bnav-lbl{color:var(--pur)}
+
+#toast{position:fixed;bottom:calc(4.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(80px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:var(--ink);color:white;padding:.55rem 1.1rem;border-radius:99px;font-size:.8rem;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="back">← Accueil</a>
+  <span class="tb-title">Films & Cinéma</span>
+  <button class="tb-add" onclick="openAdd()">+ Film</button>
+</div>
+
+<!-- CONTEXT -->
+<div class="ctx-bar" id="ctxBar">
+  <button class="ctx-btn on" data-ctx="famille" onclick="setCtx(this)">👨‍👩‍👧‍👦 Famille</button>
+  <button class="ctx-btn" data-ctx="couple" onclick="setCtx(this)">💑 Couple</button>
+  <button class="ctx-btn" data-ctx="enfants" onclick="setCtx(this)">🧒 Enfants</button>
+  <button class="ctx-btn" data-ctx="aine" onclick="setCtx(this)">👦 Aîné seul</button>
+  <button class="ctx-btn" data-ctx="ados" onclick="setCtx(this)">🧒 Ados</button>
+  <button class="ctx-btn" data-ctx="tout" onclick="setCtx(this)">📋 Tous</button>
+</div>
+
+<!-- FILTER -->
+<div class="filter-bar">
+  <span class="fbtn-lbl">Filtre :</span>
+  <button class="fbtn on" data-f="all" onclick="setFilter(this)">Tous</button>
+  <button class="fbtn" data-f="avoir" onclick="setFilter(this)">À voir</button>
+  <button class="fbtn" data-f="vu" onclick="setFilter(this)">Vus ✓</button>
+  <button class="fbtn" data-f="top" onclick="setFilter(this)">Top ⭐</button>
+</div>
+
+<!-- RECO AI -->
+<div class="reco-bar">
+  <div class="reco-desc" id="recoDesc">Recommandations IA pour <strong>toute la famille</strong></div>
+  <button class="reco-btn" onclick="genReco()">🤖 Générer des idées</button>
+</div>
+
+<!-- GEN -->
+<div id="go"><div class="gc"><div class="gs"></div><div style="font-size:.88rem;font-weight:600;margin-bottom:.2rem" id="gt">Recherche de films…</div><div style="font-size:.75rem;color:var(--mt)" id="gsb">Analyse de la famille…</div></div></div>
+
+<!-- CONTENT -->
+<main id="mainContent"></main>
+
+<!-- ADD SHEET -->
+<div class="ov" id="addOv">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="addTitle" style="font-size:.95rem;font-weight:700;margin-bottom:.8rem">+ Ajouter un film</h3>
+    <span class="flbl">Titre du film</span>
+    <input class="finp" id="fTitre" placeholder="Ex: Le Roi Lion">
+    <span class="flbl">Année</span>
+    <input class="finp" id="fAnnee" type="number" placeholder="Ex: 2019">
+    <span class="flbl">Pour quel contexte ?</span>
+    <div class="chips" id="ctxChips">
+      <span class="chip on" data-v="famille">👨‍👩‍👧‍👦 Famille</span>
+      <span class="chip" data-v="couple">💑 Couple</span>
+      <span class="chip" data-v="enfants">🧒 Enfants</span>
+      <span class="chip" data-v="ados">🧒 Ados</span>
+    </div>
+    <span class="flbl">Genres</span>
+    <div class="chips" id="genreChips">
+      <span class="chip" data-v="comédie">😄 Comédie</span>
+      <span class="chip" data-v="animation">🎨 Animation</span>
+      <span class="chip" data-v="aventure">⚔️ Aventure</span>
+      <span class="chip" data-v="drame">😢 Drame</span>
+      <span class="chip" data-v="action">💥 Action</span>
+      <span class="chip" data-v="documentaire">🎙️ Docu</span>
+      <span class="chip" data-v="sf">🚀 SF</span>
+      <span class="chip" data-v="thriller">🔍 Thriller</span>
+    </div>
+    <span class="flbl">Note (optionnel)</span>
+    <div style="display:flex;gap:.3rem;margin-bottom:.7rem" id="addStars">
+      ${[1,2,3,4,5].map(n=>`<span class="fr-star" data-n="${n}" onclick="setAddStar(${n})" style="font-size:1.3rem">★</span>`).join('')}
+    </div>
+    <input type="hidden" id="fId">
+    <div class="sfoot">
+      <button class="sbs" onclick="closeAdd()">Annuler</button>
+      <button class="sbp" onclick="saveFilm()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bnav">
+  <a href="index.html" class="bnav-item"><span class="bnav-ico">🏠</span><span class="bnav-lbl">Accueil</span></a>
+  <a href="famille.html" class="bnav-item"><span class="bnav-ico">👨‍👩‍👧‍👦</span><span class="bnav-lbl">Famille</span></a>
+  <a href="menu.html" class="bnav-item"><span class="bnav-ico">🍲</span><span class="bnav-lbl">Menu</span></a>
+  <a href="films.html" class="bnav-item on"><span class="bnav-ico">🎬</span><span class="bnav-lbl">Films</span></a>
+  <a href="cadeaux.html" class="bnav-item"><span class="bnav-ico">🎁</span><span class="bnav-lbl">Cadeaux</span></a>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const FB={apiKey:"AIzaSyA4tT621FrG1Ne39DibsFp_hcyKSIivYEA",authDomain:"menu-famille-96a3a.firebaseapp.com",databaseURL:"https://menu-famille-96a3a-default-rtdb.europe-west1.firebasedatabase.app",projectId:"menu-famille-96a3a",storageBucket:"menu-famille-96a3a.firebasestorage.app",messagingSenderId:"886399574894",appId:"1:886399574894:web:7a88a977c8bf7ad323d77f"};
+let db=null;
+try{firebase.initializeApp(FB);db=firebase.database();}catch(e){}
+const oaiKey=localStorage.getItem('tmx_oai')||'';
+
+let films=[];
+let ctx='famille';
+let filterMode='all';
+let addStar=0;
+let editId=null;
+let addCtxSel=['famille'];
+let addGenres=[];
+
+function load(){
+  const f=localStorage.getItem('fos_films');
+  if(f)films=JSON.parse(f);
+  render();
+}
+function save(){
+  localStorage.setItem('fos_films',JSON.stringify(films));
+  if(db)db.ref('famille/films').set(films);
+}
+
+// ── CONTEXT & FILTER ──
+function setCtx(btn){
+  document.querySelectorAll('.ctx-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ctx=btn.dataset.ctx;
+  const labels={famille:'toute la famille',couple:'vous deux',enfants:'les enfants',aine:'l\'aîné',ados:'les ados',tout:'la famille'};
+  document.getElementById('recoDesc').innerHTML=`Recommandations IA pour <strong>${labels[ctx]||ctx}</strong>`;
+  render();
+}
+function setFilter(btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  filterMode=btn.dataset.f;
+  render();
+}
+
+// ── RENDER ──
+function getFiltered(){
+  let f=films;
+  if(ctx!=='tout') f=f.filter(x=>x.ctx&&x.ctx.includes(ctx));
+  if(filterMode==='avoir') f=f.filter(x=>!x.vu);
+  if(filterMode==='vu') f=f.filter(x=>x.vu);
+  if(filterMode==='top') f=f.filter(x=>(x.note||0)>=4);
+  return f;
+}
+
+function render(){
+  const f=getFiltered();
+  const mc=document.getElementById('mainContent');
+  if(!f.length && !films.length){
+    mc.innerHTML=`<div class="empty"><div class="empty-ico">🎬</div><div class="empty-txt">Aucun film pour l'instant.<br>Cliquez sur <strong>"🤖 Générer des idées"</strong> pour des suggestions IA<br>ou <strong>"+ Film"</strong> pour ajouter manuellement.</div></div>`;
+    return;
+  }
+  if(!f.length){
+    mc.innerHTML=`<div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Aucun film pour ce filtre.<br>Changez le contexte ou le filtre.</div></div>`;
+    return;
+  }
+
+  const aVoir=f.filter(x=>!x.vu);
+  const vus=f.filter(x=>x.vu);
+  let html='';
+
+  if(aVoir.length){
+    html+=`<div class="sec-hdr"><span class="sec-title">À voir (${aVoir.length})</span></div>`;
+    html+=`<div class="film-list">${aVoir.map(filmRowHTML).join('')}</div>`;
+  }
+  if(vus.length){
+    html+=`<div class="sec-hdr" style="margin-top:1.2rem"><span class="sec-title">Déjà vus (${vus.length})</span></div>`;
+    html+=`<div class="film-list">${vus.map(filmRowHTML).join('')}</div>`;
+  }
+  mc.innerHTML=html;
+}
+
+function filmRowHTML(f){
+  const stars=[1,2,3,4,5].map(n=>`<span class="fr-star ${(f.note||0)>=n?'on':''}" onclick="rateFilm('${f.id}',${n});event.stopPropagation()">★</span>`).join('');
+  const tags=(f.ctx||[]).map(c=>`<span class="ftag">${ctxEmoji(c)} ${c}</span>`).join('')+
+             (f.genres||[]).map(g=>`<span class="ftag" style="background:#EAF3EC;color:#4A7C59">${g}</span>`).join('');
+  return`<div class="film-row" onclick="openEdit('${f.id}')">
+    <div class="fr-poster">${f.emoji||'🎬'}</div>
+    <div class="fr-info">
+      <div class="fr-title">${f.titre}</div>
+      <div class="fr-meta">${f.annee||''}${f.imdb?` · ⭐ ${f.imdb} IMDb`:''}</div>
+      <div class="fr-tags">${tags}</div>
+    </div>
+    <div class="fr-right">
+      <div class="fr-stars">${stars}</div>
+      <button class="vu-btn ${f.vu?'vu':''}" onclick="toggleVu('${f.id}');event.stopPropagation()">${f.vu?'✓ Vu':'À voir'}</button>
+      <button class="del-film" onclick="delFilm('${f.id}');event.stopPropagation()">🗑️</button>
+    </div>
+  </div>`;
+}
+function ctxEmoji(c){return{famille:'👨‍👩‍👧‍👦',couple:'💑',enfants:'🧒',ados:'🧒',aine:'👦'}[c]||'🎬';}
+
+function toggleVu(id){
+  const f=films.find(x=>x.id===id);if(!f)return;
+  f.vu=!f.vu;
+  save();render();
+  toast(f.vu?`✅ "${f.titre}" marqué comme vu`:`↩️ "${f.titre}" remis à voir`);
+}
+function rateFilm(id,n){
+  const f=films.find(x=>x.id===id);if(!f)return;
+  f.note=f.note===n?0:n;
+  save();render();
+}
+function delFilm(id){
+  const f=films.find(x=>x.id===id);
+  if(!f||!confirm(`Supprimer "${f.titre}" ?`))return;
+  films=films.filter(x=>x.id!==id);
+  save();render();toast('🗑️ Film supprimé');
+}
+
+// ── ADD / EDIT ──
+function openAdd(){
+  editId=null;addStar=0;addCtxSel=['famille'];addGenres=[];
+  document.getElementById('addTitle').textContent='+ Ajouter un film';
+  document.getElementById('fTitre').value='';
+  document.getElementById('fAnnee').value='';
+  document.getElementById('fId').value='';
+  renderAddChips();renderAddStars();
+  document.getElementById('addOv').classList.add('show');
+}
+function openEdit(id){
+  const f=films.find(x=>x.id===id);if(!f)return;
+  editId=id;addStar=f.note||0;addCtxSel=f.ctx||['famille'];addGenres=f.genres||[];
+  document.getElementById('addTitle').textContent='✏️ Modifier';
+  document.getElementById('fTitre').value=f.titre||'';
+  document.getElementById('fAnnee').value=f.annee||'';
+  document.getElementById('fId').value=id;
+  renderAddChips();renderAddStars();
+  document.getElementById('addOv').classList.add('show');
+}
+function closeAdd(){document.getElementById('addOv').classList.remove('show');}
+
+function renderAddChips(){
+  document.querySelectorAll('#ctxChips .chip').forEach(c=>{
+    c.classList.toggle('on',addCtxSel.includes(c.dataset.v));
+    c.onclick=()=>{c.classList.toggle('on');addCtxSel=c.classList.contains('on')?[...addCtxSel,c.dataset.v]:addCtxSel.filter(x=>x!==c.dataset.v);};
+  });
+  document.querySelectorAll('#genreChips .chip').forEach(c=>{
+    c.classList.toggle('on',addGenres.includes(c.dataset.v));
+    c.onclick=()=>{c.classList.toggle('on');addGenres=c.classList.contains('on')?[...addGenres,c.dataset.v]:addGenres.filter(x=>x!==c.dataset.v);};
+  });
+}
+function renderAddStars(){
+  document.querySelectorAll('#addStars .fr-star').forEach(s=>{
+    s.classList.toggle('on',parseInt(s.dataset.n)<=addStar);
+  });
+}
+function setAddStar(n){addStar=addStar===n?0:n;renderAddStars();}
+
+function saveFilm(){
+  const titre=document.getElementById('fTitre').value.trim();
+  if(!titre){toast('Entrez un titre');return;}
+  const annee=parseInt(document.getElementById('fAnnee').value)||null;
+  const emojis=['🎬','🎭','🎥','🍿','🎞️','🎦'];
+  const emoji=emojis[Math.floor(Math.random()*emojis.length)];
+  if(editId){
+    const idx=films.findIndex(x=>x.id===editId);
+    if(idx>=0)films[idx]={...films[idx],titre,annee,ctx:addCtxSel,genres:addGenres,note:addStar||films[idx].note};
+  }else{
+    films.push({id:Date.now().toString(),titre,annee,ctx:addCtxSel,genres:addGenres,note:addStar,vu:false,emoji,ajouteLe:new Date().toISOString()});
+  }
+  save();render();closeAdd();
+  toast(editId?`✅ Film mis à jour`:`✅ "${titre}" ajouté !`);
+}
+
+// ── AI RECO ──
+async function genReco(){
+  if(!oaiKey){
+    toast('⚙️ Configurez votre clé OpenAI dans Menu → ⚙️');
+    return;
+  }
+  const membres=JSON.parse(localStorage.getItem('fos_membres')||'[]');
+  const vuTitres=films.filter(f=>f.vu).map(f=>f.titre).slice(-10);
+  const aVoir=films.filter(f=>!f.vu).map(f=>f.titre).slice(0,5);
+  const top=films.filter(f=>(f.note||0)>=4).map(f=>`${f.titre}(${f.note}★)`).slice(0,5);
+
+  const ctxDesc={
+    famille:'toute la famille ensemble (adultes + enfants)',
+    couple:'le couple seul (adultes)',
+    enfants:'les jeunes enfants',
+    aine:membres.find(m=>m.id==='3')?`l'aîné ${membres.find(m=>m.id==='3').prenom} (${new Date().getFullYear()-members.find(m=>m.id==='3')?.annee||12} ans)`:'l\'aîné',
+    ados:'les adolescents',
+    tout:'toute la famille'
+  };
+
+  const famDesc=membres.map(m=>`${m.prenom} (${new Date().getFullYear()-(m.annee||2000)} ans, ${m.sexe==='m'?'garçon':'fille'})`).join(', ');
+
+  document.getElementById('go').classList.add('show');
+  document.getElementById('gt').textContent='Recherche de films…';
+  document.getElementById('gsb').textContent=`Pour ${ctxDesc[ctx]||ctx}`;
+
+  const p=`Expert cinéma famille. Propose 5 films pour ${ctxDesc[ctx]||'la famille'}.
+Famille: ${famDesc||'2 adultes + 3 enfants garçons'}
+${vuTitres.length?`Déjà vus (ne pas répéter): ${vuTitres.join(', ')}`:''}
+${top.length?`Films adorés: ${top.join(', ')}`:''}
+${aVoir.length?`Déjà dans la liste: ${aVoir.join(', ')}`:''}
+Contexte actuel: ${ctx}
+Films récents ou classiques, disponibles sur Netflix/Disney+/Prime/Apple TV.
+JSON uniquement: [{"titre":"...","annee":2023,"genres":["animation","aventure"],"ctx":["${ctx}"],"imdb":"8.2","emoji":"🎬","pourquoi":"une phrase pourquoi ce film pour ce contexte","plateforme":"Netflix"}]`;
+
+  try{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${oaiKey}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:p}],max_tokens:1000,temperature:0.8})});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const raw=data.choices[0].message.content.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const si=raw.indexOf('['),ei=raw.lastIndexOf(']');
+    const recs=JSON.parse(raw.slice(si,ei+1));
+
+    document.getElementById('go').classList.remove('show');
+
+    // Show results in a special section
+    const mc=document.getElementById('mainContent');
+    const recHTML=`<div style="background:linear-gradient(135deg,#4a1a3a22,#8B2FC922);border:1px solid var(--purb);border-radius:14px;padding:.9rem;margin-bottom:1rem">
+      <div style="font-size:.72rem;font-weight:700;color:var(--pur);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.65rem">🤖 Suggestions IA pour ${ctxDesc[ctx]||ctx}</div>
+      ${recs.map(r=>`<div style="background:var(--sf);border-radius:10px;padding:.75rem;margin-bottom:.45rem;display:flex;gap:.6rem;align-items:flex-start">
+        <div style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,#4a1a3a,#8B2FC9);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${r.emoji||'🎬'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.83rem;font-weight:700;color:var(--ink)">${r.titre} <span style="color:var(--mt);font-weight:400;font-size:.72rem">${r.annee||''}</span></div>
+          <div style="font-size:.68rem;color:var(--mt);margin-top:.1rem">${r.plateforme?`📺 ${r.plateforme} · `:''}⭐ ${r.imdb||'—'} IMDb</div>
+          <div style="font-size:.7rem;color:var(--k2);margin-top:.22rem;line-height:1.4">${r.pourquoi||''}</div>
+          <div style="display:flex;gap:.25rem;flex-wrap:wrap;margin-top:.3rem">${(r.genres||[]).map(g=>`<span style="font-size:.6rem;background:var(--purl);color:var(--pur);border-radius:99px;padding:.08rem .42rem;font-weight:600">${g}</span>`).join('')}</div>
+        </div>
+        <button onclick="addFromReco(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="background:var(--pur);color:white;border:none;border-radius:7px;padding:.28rem .55rem;font-size:.65rem;font-weight:600;cursor:pointer;flex-shrink:0">+ Ajouter</button>
+      </div>`).join('')}
+    </div>`;
+
+    mc.innerHTML = recHTML + mc.innerHTML;
+    toast(`✨ ${recs.length} films suggérés !`);
+  }catch(e){
+    document.getElementById('go').classList.remove('show');
+    toast('❌ '+e.message.slice(0,50));
+  }
+}
+
+function addFromReco(r){
+  if(films.find(f=>f.titre.toLowerCase()===r.titre.toLowerCase())){toast('Déjà dans votre liste');return;}
+  films.push({id:Date.now().toString(),titre:r.titre,annee:r.annee,ctx:r.ctx||[ctx],genres:r.genres||[],note:0,vu:false,emoji:r.emoji||'🎬',imdb:r.imdb,ajouteLe:new Date().toISOString()});
+  save();render();toast(`✅ "${r.titre}" ajouté !`);
+}
+
+let tt;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000);}
+
+load();
+
+if(db){
+  db.ref('famille/films').on('value',snap=>{const v=snap.val();if(v&&Array.isArray(v)){films=v;render();}});
+}
+// Session guard
+if(localStorage.getItem('fos_auth')!=='1' && localStorage.getItem('famille_auth')!=='1' && sessionStorage.getItem('fos_auth')!=='1'){
+  // Show mini-login overlay
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:linear-gradient(145deg,#2D4A35,#1a2e20);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:1rem;padding:2rem';
+  ov.innerHTML=`<div style="font-size:2rem">🏠</div>
+    <h2 style="font-family:Playfair Display,serif;color:white;font-size:1.6rem">Famille OS</h2>
+    <input id="quickPw" type="password" placeholder="Mot de passe" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:12px;padding:.75rem 1.2rem;font-size:.9rem;text-align:center;outline:none;width:260px;letter-spacing:.1em">
+    <button onclick="const v=document.getElementById('quickPw').value;if(v==='famille2025'){localStorage.setItem('fos_auth','1');localStorage.setItem('famille_auth','1');sessionStorage.setItem('fos_auth','1');location.reload();}else{alert('Mot de passe incorrect');}" style="background:#6A9E79;color:white;border:none;border-radius:12px;padding:.75rem 2rem;font-size:.9rem;font-weight:600;cursor:pointer;width:260px">Entrer →</button>
+    <a href="index.html" style="color:rgba(255,255,255,.35);font-size:.75rem;text-decoration:none">← Accueil</a>`;
+  document.body.appendChild(ov);
+  document.getElementById('quickPw').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.nextElementSibling.click();});
+}
+</script>
+</body>
+</html>
