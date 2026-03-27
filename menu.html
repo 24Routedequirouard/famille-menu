@@ -448,13 +448,6 @@ main{max-width:1100px;margin:0 auto;padding:1.2rem 1rem}
 
   <main>
     <div class="tab-panel active" id="panel-menu">
-      <div class="legend">
-        <span>Bouton repas :</span>
-        <span class="lbadge" style="background:var(--sxl);color:var(--sage)">✅ Garder</span>→
-        <span class="lbadge" style="background:var(--aml);color:var(--am)">🔄 Changer</span>→
-        <span class="lbadge" style="background:var(--rdl);color:var(--rd)">🗑️ Retirer</span>
-        <span style="margin-left:.5rem">Marquez 🔄 puis cliquez <strong>"Renouveler"</strong> — ou <strong>"Nouveau menu"</strong> pour tout changer</span>
-      </div>
       <div class="menu-grid" id="menuGrid"></div>
     </div>
 
@@ -642,7 +635,7 @@ function initApp() {
     db = firebase.database();
     setSyncing(true);
     db.ref('famille').on('value', snap => {
-      if (Date.now() - lastSaveTime < 4000) { setSyncing(false); return; }
+      if (Date.now() - lastSaveTime < 8000) { setSyncing(false); return; }
       const d = snap.val() || {};
       if (d.states) states = d.states;
       if (d.ratings) ratings = d.ratings;
@@ -890,7 +883,16 @@ function getRemovedMeals() {
 }
 
 function isItemOff(item, removed) {
-  return item.meals?.length > 0 && item.meals.every(m => removed.has(m));
+  if (!item.meals?.length) return false;
+  // Check by current meal names (meals may have been renamed)
+  return item.meals.every(mealName => {
+    // Direct match with removed name
+    if (removed.has(mealName)) return true;
+    // Also check if this meal name exists NOWHERE in current MENU (was renamed/replaced)
+    const existsInMenu = MENU.some(d => d.meals.some(m => m.name === mealName));
+    if (!existsInMenu) return true; // meal was renamed, treat as removed
+    return false;
+  });
 }
 
 function renderShop() {
@@ -1113,6 +1115,18 @@ Réponds UNIQUEMENT avec ce JSON (rien d'autre):
       updated++;
     });
 
+    // Update SHOP: replace old meal names with new ones in shop items
+    meals.forEach(x => {
+      const [di,mi] = x.k.split('_').map(Number);
+      const oldName = MENU[di]?.meals[mi]?.name;
+      const newName = (x.name||'').trim();
+      if (oldName && newName && oldName !== newName) {
+        SHOP.forEach(cat => cat.items.forEach(item => {
+          if (item.meals) item.meals = item.meals.map(m => m===oldName ? newName : m);
+        }));
+      }
+    });
+
     MENU = newMenu;
     states = newStates;
     hideGen();
@@ -1124,6 +1138,7 @@ Réponds UNIQUEMENT avec ce JSON (rien d'autre):
     if (db) {
       db.ref('famille/menu').set(newMenu);
       db.ref('famille/states').set(newStates);
+      db.ref('famille/shop').set(SHOP);
     }
   } catch(e) {
     hideGen();
@@ -1299,26 +1314,38 @@ async function runGuest() {
   closeModal('guestModal');
   showGen(`Repas invités — ${gNum} personnes…`, 'Plat festif en cours…');
 
-  const prompt = `Expert Thermomix. Propose UN plat festif et impressionnant pour ${gNum} personnes (${day} ${mType}).
-${buildPrefPrompt()}
-JSON uniquement: [{"k":"${guestDayIdx}_${guestMealIdx}","name":"Nom festif complet","desc":"ingrédients (${gNum} pers)","thermo":"mode","cookidoo":"terme Thermomix","kcal":550,"prot":35,"lip":20,"glu":50,"score":"A","note":"occasion spéciale"}]`;
+  const currentMealName = MENU[guestDayIdx].meals[guestMealIdx].name;
+  const prompt = `Tu prépares "${currentMealName}" pour ${gNum} personnes (au lieu de 5 habituellement).
+Donne la liste complète des ingrédients adaptée pour ${gNum} personnes.
+JSON uniquement: [{"k":"${guestDayIdx}_${guestMealIdx}","name":"${currentMealName}","desc":"ingrédients pour ${gNum} pers","thermo":"Cuisson","cookidoo":"${currentMealName} Thermomix","kcal":550,"prot":35,"lip":20,"glu":50,"score":"A","note":"pour ${gNum} personnes","ingredients":[{"name":"Nom ingrédient","qty":"quantité pour ${gNum} pers"}]}]`;
 
   try {
-    const raw = await callAI(prompt, 500);
+    const raw = await callAI(prompt, 600);
     const meals = extractJSON(raw);
     if (!meals?.[0]) throw new Error('Pas de réponse');
     const x = meals[0];
-    const newMenu = JSON.parse(JSON.stringify(MENU));
-    newMenu[guestDayIdx].meals[guestMealIdx] = {
-      ...newMenu[guestDayIdx].meals[guestMealIdx],
-      name: '🎉 '+x.name, desc: x.desc+` — ${gNum} pers.`,
-      thermo:x.thermo, cookidoo:x.cookidoo, kcal:x.kcal, prot:x.prot, lip:x.lip, glu:x.glu, score:x.score, note:x.note
-    };
-    MENU = newMenu;
+    // Don't replace the meal — just add guest quantities to shop
+    const currentMeal = MENU[guestDayIdx].meals[guestMealIdx];
+    let guestCat = SHOP.find(c => c.cat === `🎉 Invités ${day}`);
+    if (!guestCat) {
+      guestCat = {cat:`🎉 Invités ${day}`, color:'#7C3AED', icon:'🎉', items:[]};
+      SHOP.push(guestCat);
+    } else {
+      guestCat.items = []; // reset for this day
+    }
+    // Add guest-quantity ingredients
+    if (x.ingredients?.length) {
+      x.ingredients.forEach(ing => {
+        if (ing.name) guestCat.items.push({name:ing.name, qty:ing.qty||'—', meals:[]});
+      });
+    } else {
+      // fallback: add a note item
+      guestCat.items.push({name:`Ingrédients pour ${currentMeal.name} x${gNum}`, qty:`${gNum} pers.`, meals:[]});
+    }
     hideGen(); renderAll();
-    toast(`🎉 Repas invités : ${x.name}`);
+    toast(`🎉 Ingrédients pour ${gNum} invités ajoutés aux courses !`);
     lastSaveTime = Date.now();
-    if (db) db.ref('famille/menu').set(newMenu);
+    if (db) db.ref('famille/shop').set(SHOP);
   } catch(e) {
     hideGen(); toast('❌ '+e.message.slice(0,50));
   }
