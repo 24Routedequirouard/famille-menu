@@ -1058,6 +1058,68 @@ async function renewAll() {
   await doRenew(all);
 }
 
+// Rebuild shop categories from meal ingredient descriptions
+function rebuildShopFromMenu(menu) {
+  // Keep the fixed categories structure but update meal assignments
+  const baseShop = JSON.parse(JSON.stringify(SHOP));
+  
+  // Collect all current meal names from new menu
+  const allMealNames = new Set(menu.flatMap(d => d.meals.map(m => m.name)));
+  
+  // Remove "Ajouts manuels" category (will be rebuilt)
+  const filtered = baseShop.filter(c => c.cat !== 'Ajouts manuels' && !c.cat.startsWith('🎉 Invités'));
+  
+  // For each meal, extract ingredients from desc and add to "Ajouts" if not already in base categories
+  const existingIngredients = new Set(filtered.flatMap(c => c.items.map(i => i.name.toLowerCase())));
+  const manualItems = [];
+  
+  // Update meal references: remove meals that no longer exist
+  filtered.forEach(cat => {
+    cat.items.forEach(item => {
+      // Keep only meals that still exist in the new menu
+      if (item.meals?.length) {
+        item.meals = item.meals.filter(m => allMealNames.has(m));
+      }
+    });
+  });
+  
+  // Add new ingredients from each new meal's desc
+  menu.forEach(day => {
+    day.meals.forEach(meal => {
+      if (!meal.desc) return;
+      const ingrs = meal.desc.split(',').map(s => s.trim()).filter(s => s.length > 2);
+      ingrs.forEach(ingr => {
+        // Check if this ingredient is already covered
+        const alreadyCovered = filtered.flatMap(c => c.items).some(i => 
+          i.name.toLowerCase().includes(ingr.toLowerCase()) || 
+          ingr.toLowerCase().includes(i.name.toLowerCase())
+        );
+        if (!alreadyCovered) {
+          const existing = manualItems.find(i => i.name.toLowerCase() === ingr.toLowerCase());
+          if (existing) {
+            if (!existing.meals.includes(meal.name)) existing.meals.push(meal.name);
+          } else {
+            manualItems.push({name: ingr, qty: '—', meals: [meal.name]});
+          }
+        } else {
+          // Add this meal to the existing ingredient's meals list
+          filtered.flatMap(c => c.items).forEach(i => {
+            if ((i.name.toLowerCase().includes(ingr.toLowerCase()) || ingr.toLowerCase().includes(i.name.toLowerCase())) && i.meals !== undefined) {
+              if (!i.meals.includes(meal.name)) i.meals.push(meal.name);
+            }
+          });
+        }
+      });
+    });
+  });
+  
+  if (manualItems.length) {
+    filtered.push({cat: 'Autres ingrédients', color: '#607D8B', icon: '🧺', items: manualItems});
+  }
+  
+  return filtered;
+}
+
 async function doRenew(list) {
   if (!oaiKey) { openModal('apiModal'); toast('⚙️ Entrez votre clé OpenAI'); return; }
   if (!list.length) { toast('Aucun plat à renouveler'); return; }
@@ -1115,7 +1177,7 @@ Réponds UNIQUEMENT avec ce JSON (rien d'autre):
       updated++;
     });
 
-    // Update SHOP: replace old meal names with new ones in shop items
+    // Update SHOP meal names for renamed meals
     meals.forEach(x => {
       const [di,mi] = x.k.split('_').map(Number);
       const oldName = MENU[di]?.meals[mi]?.name;
@@ -1126,6 +1188,10 @@ Réponds UNIQUEMENT avec ce JSON (rien d'autre):
         }));
       }
     });
+
+    // If full menu renewal, rebuild SHOP ingredients from new meal descs
+    // Always rebuild shop when meals change
+    SHOP = rebuildShopFromMenu(newMenu);
 
     MENU = newMenu;
     states = newStates;
@@ -1219,6 +1285,7 @@ function confirmEdit() {
     });
   }
 
+  SHOP = rebuildShopFromMenu(MENU);
   lastSaveTime = Date.now();
   if (db) { db.ref('famille/menu').set(MENU); db.ref('famille/shop').set(SHOP); }
   closeModal('editModal');
