@@ -230,6 +230,21 @@ main{max-width:1100px;margin:0 auto;padding:1.2rem 1rem}
 /* TOAST */
 #toast{position:fixed;bottom:1.3rem;left:50%;transform:translateX(-50%) translateY(80px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:var(--ink);color:white;padding:.5rem 1rem;border-radius:99px;font-size:.78rem;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw}
 #toast.show{transform:translateX(-50%) translateY(0)}
+/* Semaines sauvegardées */
+.week-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:.65rem;box-shadow:var(--sh)}
+.week-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
+.week-date{font-size:.82rem;font-weight:700;color:var(--ink)}
+.week-actions{display:flex;gap:.35rem}
+.week-btn{border:none;border-radius:7px;padding:.24rem .6rem;font-size:.7rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif}
+.week-restore{background:var(--sxl);color:var(--sage)}
+.week-del{background:var(--rdl);color:var(--rd)}
+.week-meals{display:flex;flex-wrap:wrap;gap:.25rem}
+.week-meal-tag{font-size:.65rem;background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:.1rem .42rem;color:var(--k2)}
+/* Nombre de personnes par repas */
+.meal-persons{display:flex;align-items:center;gap:.35rem;margin-top:.5rem}
+.pers-btn{background:var(--s2);border:1.5px solid var(--bd);border-radius:6px;width:24px;height:24px;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;flex-shrink:0}
+.pers-val{font-size:.75rem;font-weight:700;color:var(--sage);min-width:28px;text-align:center}
+.pers-label{font-size:.68rem;color:var(--mt)}
 
 @media(max-width:600px){.menu-grid,.shop-grid,.hist-grid{grid-template-columns:1fr}.topbar{gap:.4rem}}
 </style>
@@ -431,7 +446,8 @@ main{max-width:1100px;margin:0 auto;padding:1.2rem 1rem}
       <button class="btn btn-outline" id="renewSelBtn" onclick="renewSelected()" style="display:none">
         🔄 Renouveler <span class="badge" id="renewCount">0</span>
       </button>
-      <button class="btn btn-primary" onclick="renewAll()">🎲 Nouveau menu</button>
+      <button class="btn btn-outline" onclick="saveWeek()" title="Sauvegarder cette semaine dans l'historique">💾 Sauvegarder</button>
+        <button class="btn btn-primary" onclick="renewAll()">🎲 Nouveau menu</button>
       <button class="btn btn-outline" onclick="openPrefs()">🎯 Préférences</button>
       <button class="btn btn-outline" onclick="openModal('guestModal');initGuestDays()">🎉 Invités</button>
       <button class="btn btn-icon" onclick="openModal('apiModal')">⚙️</button>
@@ -466,10 +482,20 @@ main{max-width:1100px;margin:0 auto;padding:1.2rem 1rem}
     </div>
 
     <div class="tab-panel" id="panel-hist">
+      <div style="display:flex;gap:.5rem;margin-bottom:.85rem;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.82rem;font-weight:700;color:var(--ink)">📅 Semaines sauvegardées</span>
+        <button class="btn btn-outline" onclick="saveWeek()" style="margin-left:auto">💾 Sauvegarder cette semaine</button>
+      </div>
+      <div id="weeksGrid"></div>
+      <div id="weeksEmpty" style="text-align:center;padding:1.5rem;color:var(--mt);font-size:.8rem;display:none">
+        <div style="font-size:1.8rem;margin-bottom:.5rem">📅</div>
+        Cliquez "💾 Sauvegarder" pour archiver votre semaine actuelle
+      </div>
+      <div style="font-size:.72rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.07em;margin:1.2rem 0 .65rem">⭐ Notes des plats</div>
       <div class="hist-grid" id="histGrid"></div>
-      <div id="histEmpty" style="text-align:center;padding:2.5rem;color:var(--mt);display:none">
-        <div style="font-size:2rem;margin-bottom:.5rem">⭐</div>
-        <p style="font-size:.8rem">Notez les plats dans l'onglet Menu pour les retrouver ici.</p>
+      <div id="histEmpty" style="text-align:center;padding:1.5rem;color:var(--mt);display:none">
+        <div style="font-size:1.8rem;margin-bottom:.5rem">⭐</div>
+        <p style="font-size:.8rem">Notez les plats dans l'onglet Menu</p>
       </div>
     </div>
   </main>
@@ -505,7 +531,7 @@ let editAiResult = null;
 let guestDayIdx = 0, guestMealIdx = 0;
 
 let prefs = {adultes:2, enfants:3, tmx:true, cuisines:[], contraintes:[], temps:[], note:''};
-let states = {}, ratings = {}, checked = {};
+let states = {}, ratings = {}, checked = {}, savedWeeks = [], persons = {};
 
 let MENU = [
   {day:"Lundi",emoji:"🥕",weekend:false,meals:[
@@ -642,6 +668,7 @@ function initApp() {
       if (d.checked) checked = d.checked;
       if (d.menu) MENU = d.menu;
       if (d.shop) SHOP = d.shop;
+      if (d.savedWeeks) { savedWeeks = d.savedWeeks; localStorage.setItem('tmx_saved_weeks', JSON.stringify(savedWeeks)); }
       setSyncing(false);
       renderAll();
     });
@@ -666,6 +693,18 @@ function fbSet(path, val) {
 // ════════════════════════════════════════
 // PREFS
 // ════════════════════════════════════════
+// Load persons per meal
+(function() {
+  const p = localStorage.getItem('tmx_persons');
+  if (p) try { persons = JSON.parse(p); } catch(e) {}
+})();
+
+// Load saved weeks
+(function() {
+  const sw = localStorage.getItem('tmx_saved_weeks');
+  if (sw) try { savedWeeks = JSON.parse(sw); } catch(e) {}
+})();
+
 function loadPrefs() {
   const s = localStorage.getItem('tmx_prefs');
   if (s) try { prefs = {...prefs, ...JSON.parse(s)}; } catch(e) {}
@@ -738,7 +777,7 @@ document.querySelectorAll('.chip').forEach(c => {
 // ════════════════════════════════════════
 // RENDER
 // ════════════════════════════════════════
-function renderAll() { renderMenu(); renderShop(); renderHist(); updateBadges(); }
+function renderAll() { renderMenu(); renderShop(); renderHist(); renderWeeks(); updateBadges(); }
 
 function renderMenu() {
   const grid = document.getElementById('menuGrid');
@@ -824,6 +863,12 @@ function renderMenu() {
           ${meal.thermo?`<span class="atag atag-time">⏱️ ${meal.thermo}</span>`:''}
         </div>
         <div class="stars">
+          <div class="meal-persons">
+            <button class="pers-btn" onclick="adjPersons('${key}',-1)">−</button>
+            <span class="pers-val" id="pers-${key}">${persons[key]||((prefs.adultes||2)+(prefs.enfants||3))}</span>
+            <span class="pers-label">pers.</span>
+            <button class="pers-btn" onclick="adjPersons('${key}',1)">+</button>
+          </div>
           ${[1,2,3,4,5].map(n=>`<span class="star ${(ratings[meal.name]||0)>=n?'on':''}" onclick="rateMeal('${esc(meal.name)}',${n})">★</span>`).join('')}
           <span class="star-label">${STAR_LABELS[ratings[meal.name]||0]||''}</span>
         </div>`;
@@ -857,6 +902,19 @@ function resetStates() {
   fbSet('states', {});
   renderAll();
   toast('↺ Tous les repas remis à ✅ Garder');
+}
+
+function adjPersons(key, d) {
+  const total = (prefs.adultes||2) + (prefs.enfants||3);
+  const cur = persons[key] || total;
+  persons[key] = Math.max(1, Math.min(30, cur + d));
+  const el = document.getElementById('pers-' + key);
+  if (el) el.textContent = persons[key];
+  localStorage.setItem('tmx_persons', JSON.stringify(persons));
+  // Visual feedback
+  const [di,mi] = key.split('_').map(Number);
+  const mealName = MENU[di]?.meals[mi]?.name || '';
+  toast(`${mealName}: ${persons[key]} personne${persons[key]>1?'s':''}`);
 }
 
 function rateMeal(name, n) {
@@ -975,6 +1033,94 @@ function exportDrive(store) {
 // ════════════════════════════════════════
 // HISTORY
 // ════════════════════════════════════════
+// ── SAVED WEEKS ──
+function saveWeek() {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay() + 1); // Monday
+  const label = `Semaine du ${weekStart.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  
+  // Check if this week is already saved
+  const existing = savedWeeks.findIndex(w => w.label === label);
+  
+  const entry = {
+    id: Date.now().toString(),
+    label,
+    savedAt: now.toISOString(),
+    menu: JSON.parse(JSON.stringify(MENU)),
+    shop: JSON.parse(JSON.stringify(SHOP))
+  };
+  
+  if (existing >= 0) {
+    savedWeeks[existing] = entry; // overwrite
+    toast('✅ Semaine mise à jour dans l'historique');
+  } else {
+    savedWeeks.unshift(entry); // add at top
+    if (savedWeeks.length > 12) savedWeeks.pop(); // keep 12 weeks max
+    toast('✅ Semaine sauvegardée !');
+  }
+  
+  localStorage.setItem('tmx_saved_weeks', JSON.stringify(savedWeeks));
+  if (db) { const ts = Date.now(); db.ref('famille/savedWeeks').set(savedWeeks); }
+  renderWeeks();
+  updateBadges();
+}
+
+function restoreWeek(id) {
+  const w = savedWeeks.find(x => x.id === id);
+  if (!w) return;
+  if (!confirm(`Restaurer la semaine "${w.label}" ? Le menu actuel sera remplacé.`)) return;
+  MENU = JSON.parse(JSON.stringify(w.menu));
+  SHOP = JSON.parse(JSON.stringify(w.shop));
+  states = {};
+  fbSet('menu', MENU);
+  fbSet('shop', SHOP);
+  fbSet('states', {});
+  renderAll();
+  // Switch to menu tab
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-menu').classList.add('active');
+  document.querySelector('.tab-btn').classList.add('active');
+  toast(`✅ Semaine "${w.label}" restaurée !`);
+}
+
+function deleteWeek(id) {
+  savedWeeks = savedWeeks.filter(w => w.id !== id);
+  localStorage.setItem('tmx_saved_weeks', JSON.stringify(savedWeeks));
+  if (db) db.ref('famille/savedWeeks').set(savedWeeks);
+  renderWeeks();
+  updateBadges();
+  toast('🗑️ Semaine supprimée');
+}
+
+function renderWeeks() {
+  const grid = document.getElementById('weeksGrid');
+  const empty = document.getElementById('weeksEmpty');
+  if (!grid) return;
+  if (!savedWeeks.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  grid.innerHTML = savedWeeks.map(w => {
+    const meals = w.menu?.flatMap(d=>d.meals.map(m=>m.name)).slice(0,6) || [];
+    return `<div class="week-card">
+      <div class="week-card-header">
+        <div>
+          <div class="week-date">📅 ${w.label}</div>
+          <div style="font-size:.68rem;color:var(--mt);margin-top:.1rem">Sauvegardé le ${new Date(w.savedAt).toLocaleDateString('fr-FR')}</div>
+        </div>
+        <div class="week-actions">
+          <button class="week-btn week-restore" onclick="restoreWeek('${w.id}')">↩️ Restaurer</button>
+          <button class="week-btn week-del" onclick="deleteWeek('${w.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="week-meals">
+        ${meals.map(m=>`<span class="week-meal-tag">${m}</span>`).join('')}
+        ${w.menu?.flatMap(d=>d.meals).length > 6 ? `<span class="week-meal-tag">+${w.menu.flatMap(d=>d.meals).length-6}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderHist() {
   const entries = Object.entries(ratings).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const grid = document.getElementById('histGrid');
@@ -1005,7 +1151,9 @@ function updateBadges() {
   const shopRem = SHOP.flatMap(c=>c.items).filter(i=>!isItemOff(i,removed)&&!checked[i.name]).length;
   document.getElementById('tabCourses').textContent = `🛒 Courses${shopRem>0?` (${shopRem})`:''}`;
   const histCount = Object.values(ratings).filter(v=>v>0).length;
-  document.getElementById('tabHist').textContent = `⭐ Historique${histCount>0?` (${histCount})`:''}`;
+  const weekCount = savedWeeks.length;
+  const totalHist = histCount + weekCount;
+  document.getElementById('tabHist').textContent = `⭐ Historique${totalHist>0?` (${totalHist})`:''}`;
 }
 
 // ════════════════════════════════════════
@@ -1059,65 +1207,30 @@ async function renewAll() {
 }
 
 // Rebuild shop categories from meal ingredient descriptions
-function rebuildShopFromMenu(menu) {
-  // Keep the fixed categories structure but update meal assignments
-  const baseShop = JSON.parse(JSON.stringify(SHOP));
-  
-  // Collect all current meal names from new menu
-  const allMealNames = new Set(menu.flatMap(d => d.meals.map(m => m.name)));
-  
-  // Remove "Ajouts manuels" category (will be rebuilt)
-  const filtered = baseShop.filter(c => c.cat !== 'Ajouts manuels' && !c.cat.startsWith('🎉 Invités'));
-  
-  // For each meal, extract ingredients from desc and add to "Ajouts" if not already in base categories
-  const existingIngredients = new Set(filtered.flatMap(c => c.items.map(i => i.name.toLowerCase())));
-  const manualItems = [];
-  
-  // Update meal references: remove meals that no longer exist
-  filtered.forEach(cat => {
-    cat.items.forEach(item => {
-      // Keep only meals that still exist in the new menu
-      if (item.meals?.length) {
-        item.meals = item.meals.filter(m => allMealNames.has(m));
-      }
-    });
-  });
-  
-  // Add new ingredients from each new meal's desc
-  menu.forEach(day => {
-    day.meals.forEach(meal => {
-      if (!meal.desc) return;
-      const ingrs = meal.desc.split(',').map(s => s.trim()).filter(s => s.length > 2);
-      ingrs.forEach(ingr => {
-        // Check if this ingredient is already covered
-        const alreadyCovered = filtered.flatMap(c => c.items).some(i => 
-          i.name.toLowerCase().includes(ingr.toLowerCase()) || 
-          ingr.toLowerCase().includes(i.name.toLowerCase())
-        );
-        if (!alreadyCovered) {
-          const existing = manualItems.find(i => i.name.toLowerCase() === ingr.toLowerCase());
-          if (existing) {
-            if (!existing.meals.includes(meal.name)) existing.meals.push(meal.name);
-          } else {
-            manualItems.push({name: ingr, qty: '—', meals: [meal.name]});
-          }
-        } else {
-          // Add this meal to the existing ingredient's meals list
-          filtered.flatMap(c => c.items).forEach(i => {
-            if ((i.name.toLowerCase().includes(ingr.toLowerCase()) || ingr.toLowerCase().includes(i.name.toLowerCase())) && i.meals !== undefined) {
-              if (!i.meals.includes(meal.name)) i.meals.push(meal.name);
-            }
-          });
-        }
-      });
-    });
-  });
-  
-  if (manualItems.length) {
-    filtered.push({cat: 'Autres ingrédients', color: '#607D8B', icon: '🧺', items: manualItems});
+async function rebuildShopFromMenu(menu) {
+  // Ask AI to generate a fresh shopping list from the new menu
+  const meals = menu.flatMap(d => d.meals.filter(m => m.name && m.desc));
+  const mealList = meals.map(m => `- ${m.name}: ${m.desc}`).join('\n');
+  const total = (prefs.adultes||2) + (prefs.enfants||3);
+
+  const prompt = `Tu es un assistant courses. Voici le menu de la semaine pour ${total} personnes:
+${mealList}
+
+Génère la liste de courses complète regroupée par catégorie.
+JSON uniquement, structure exacte:
+[{"cat":"Viandes & Poissons","color":"#B03A2E","icon":"🥩","items":[{"name":"Nom","qty":"quantité","meals":["Nom du repas"]}]},{"cat":"Légumes frais","color":"#1E7A3D","icon":"🥦","items":[]},{"cat":"Féculents & Céréales","color":"#B7570A","icon":"🌾","items":[]},{"cat":"Laitiers & Œufs","color":"#1A6A9A","icon":"🧀","items":[]},{"cat":"Épicerie & Conserves","color":"#5D4037","icon":"🥫","items":[]},{"cat":"Épices & Herbes","color":"#00796B","icon":"🌿","items":[]}]`;
+
+  try {
+    const raw = await callAI(prompt, 2000);
+    const si = raw.indexOf('['), ei = raw.lastIndexOf(']');
+    if (si < 0 || ei < 0) throw new Error('JSON invalide');
+    const newShop = JSON.parse(raw.slice(si, ei+1));
+    if (newShop?.length) return newShop;
+  } catch(e) {
+    console.warn('Shop AI rebuild failed:', e.message);
   }
-  
-  return filtered;
+  // Fallback: return current SHOP
+  return SHOP;
 }
 
 async function doRenew(list) {
@@ -1190,8 +1303,8 @@ Réponds UNIQUEMENT avec ce JSON (rien d'autre):
     });
 
     // If full menu renewal, rebuild SHOP ingredients from new meal descs
-    // Always rebuild shop when meals change
-    SHOP = rebuildShopFromMenu(newMenu);
+    // Rebuild shop from AI based on new menu
+    SHOP = await rebuildShopFromMenu(newMenu);
 
     MENU = newMenu;
     states = newStates;
@@ -1262,7 +1375,7 @@ JSON uniquement: {"desc":"ingrédients courts","thermo":"mode Thermomix","cookid
   }
 }
 
-function confirmEdit() {
+async function confirmEdit() {
   if (!editAiResult) return;
   const key = document.getElementById('editKey').value;
   const [di,mi] = key.split('_').map(Number);
@@ -1285,7 +1398,7 @@ function confirmEdit() {
     });
   }
 
-  SHOP = rebuildShopFromMenu(MENU);
+  SHOP = await rebuildShopFromMenu(MENU);
   lastSaveTime = Date.now();
   if (db) { db.ref('famille/menu').set(MENU); db.ref('famille/shop').set(SHOP); }
   closeModal('editModal');
