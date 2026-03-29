@@ -1053,11 +1053,11 @@ function saveWeek() {
   
   if (existing >= 0) {
     savedWeeks[existing] = entry; // overwrite
-    toast('✅ Semaine mise à jour dans l'historique');
+    toast('✅ Semaine mise à jour dans l\'historique');
   } else {
     savedWeeks.unshift(entry); // add at top
     if (savedWeeks.length > 12) savedWeeks.pop(); // keep 12 weeks max
-    toast('✅ Semaine sauvegardée !');
+    toast('✅ Semaine sauvegardée !');
   }
   
   localStorage.setItem('tmx_saved_weeks', JSON.stringify(savedWeeks));
